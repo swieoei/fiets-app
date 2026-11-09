@@ -38,15 +38,16 @@
   .share { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--bg); margin: 6px 0 10px; }
   .share i { display: block; height: 100%; }
   /* Rit-scherm: zwart kleurendisplay, beeldvullend boven de navigatie, zonder scrollen */
-  body.rit { padding-bottom: 0; background: #020304; overflow: hidden; }
+  body.rit { padding-bottom: calc(64px + env(safe-area-inset-bottom)); background: #020304; }
   body.rit header { display: none; }
   body.rit main { padding: 0; max-width: none; }
   body.rit nav { background: #020304; border-top-color: #15191c; }
   body.rit nav button { color: #6b767c; }
   body.rit nav button[aria-current="page"] { color: var(--mode-c, #22d3ee); }
-  #tab-rit:not([hidden]) { display: flex; height: calc(100dvh - 64px - env(safe-area-inset-bottom)); }
+  /* display vult precies het scherm boven de nav; de knoppen staan net onder de vouw */
+  .display { height: calc(100dvh - 64px - env(safe-area-inset-bottom)); }
   .display {
-    --mode: #3b82f6; flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 4px;
+    --mode: #3b82f6; --bat: #4ade80; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 4px;
     background: radial-gradient(120% 70% at 50% 0%, #0c1216, #020304 70%); color: #fff;
     padding: calc(10px + env(safe-area-inset-top)) 16px 12px;
   }
@@ -74,7 +75,7 @@
   .pas-line { fill: none; stroke: var(--mode); stroke-width: 4; filter: drop-shadow(0 0 5px var(--mode)); transition: stroke .3s; }
   .mode-name { position: absolute; right: 16px; bottom: 10px; font-size: 12px; letter-spacing: 2px; color: var(--mode); opacity: .75; font-weight: 700; font-style: normal; }
   .ring-track { fill: #05080a; stroke: #1b2024; stroke-width: 6; }
-  .ring-level { fill: none; stroke: var(--mode); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 100 100; filter: drop-shadow(0 0 4px var(--mode)); transition: stroke-dasharray .6s, stroke .3s; }
+  .ring-level { fill: none; stroke: var(--bat); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 100 100; filter: drop-shadow(0 0 4px var(--bat)); transition: stroke-dasharray .6s, stroke .3s; }
   #bat-num { font-size: 22px; font-style: italic; font-variant-numeric: tabular-nums; }
   #bat-num .pct-sign { font-size: 13px; fill: #8a959b; }
   .disp-trip { display: flex; justify-content: space-around; text-align: center; line-height: 1.05; }
@@ -82,7 +83,8 @@
   .disp-trip b { font-size: clamp(28px, 6dvh, 44px); font-style: italic; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
   .disp-trip small { margin-left: 4px; color: #8a959b; font-weight: 700; }
   .display .status { color: #6b767c; font-size: 13px; margin: 2px 0 4px; min-height: 1.3em; }
-  .disp-ctrl { display: flex; gap: 10px; }
+  .disp-ctrl { --mode: var(--mode-c, #3b82f6); display: flex; gap: 10px; padding: 16px; background: #020304; }
+  .display .bat-l { fill: var(--bat); transition: fill .3s; }
   .disp-ctrl button { flex: 1; background: #0e1316; border-color: #222a2f; color: #e6efed; min-height: 52px; }
   .disp-ctrl button.primary { background: var(--mode); border-color: var(--mode); color: var(--mode-on, #06080a); }
   .disp-ctrl button:disabled { opacity: .35; }
@@ -200,7 +202,7 @@
           <circle cx="70" cy="60" r="36" class="ring-track"/>
           <circle cx="70" cy="60" r="36" class="ring-level" id="bat-ring" pathLength="100" transform="rotate(-90 70 60)"/>
           <text x="70" y="69" id="bat-num">100<tspan class="pct-sign">%</tspan></text>
-          <text x="70" y="112" class="side-l">ACCU</text>
+          <text x="70" y="112" class="side-l bat-l">ACCU</text>
         </svg>
         <i class="pas-flat"><b class="mode-name" id="pas-name">RIVER</b></i>
       </div>
@@ -208,13 +210,13 @@
         <div><span>RIT</span><b id="dist">0,00</b><small>km</small></div>
         <div><span>RIJTIJD</span><b id="time">0:00:00</b></div>
       </div>
-      <div class="status" id="gps-status">Druk op Start om je rit te beginnen</div>
-      <div class="disp-ctrl">
+      <div class="status" id="gps-status">Rit start vanzelf zodra je fiets verbonden is</div>
+    </div>
+    <div class="disp-ctrl">
         <button class="primary" id="btn-start">Start</button>
         <button id="btn-pause" disabled>Pauze</button>
         <button id="btn-stop" disabled>Stop</button>
       </div>
-    </div>
   </section>
 
   <!-- LOGBOEK -->
@@ -383,6 +385,7 @@
     document.querySelectorAll('main section').forEach((s) => (s.hidden = s.id !== 'tab-' + name));
     $('title').textContent = titles[name];
     document.body.classList.toggle('rit', name === 'rit');
+    window.scrollTo(0, 0);
     if (name === 'log') renderLog();
     if (name === 'accu') renderAccu();
     if (name === 'stats') renderStats();
@@ -466,7 +469,7 @@
   function renderDisplayTop() {
     const pct = Math.round(currentPct().pct);
     $('bat-num').firstChild.nodeValue = pct;
-    $('bat-num').style.fill = pct > 15 ? '#fff' : '#f87171';
+    $('display').style.setProperty('--bat', pct > 40 ? '#4ade80' : pct > 15 ? '#fbbf24' : '#f87171');
     $('bat-ring').style.strokeDasharray = `${Math.max(pct, 0.5)} 100`;
     const on = !!(typeof bike !== 'undefined' && bike.connected);
     $('btn-bt').classList.toggle('on', on);
@@ -532,7 +535,7 @@
     } else toast(reason === 'idle' ? '5 min stilgestaan: rit gestopt (te kort om op te slaan)' : 'Rit te kort, niet opgeslagen');
     Object.assign(ride, { active: false, paused: false, watch: null, last: null });
     setButtons(); renderRide(0);
-    $('gps-status').textContent = bike.connected ? 'Fiets verbonden. Rit start opnieuw na het opnieuw verbinden of met Start.' : 'Druk op Start om je rit te beginnen';
+    $('gps-status').textContent = bike.connected ? 'Fiets verbonden. Rit start opnieuw na het opnieuw verbinden of met Start.' : 'Rit start vanzelf zodra je fiets verbonden is';
   }
   $('btn-start').addEventListener('click', () => {
     if (ride.paused) { ride.paused = false; ride.last = null; ride.lastMove = Date.now(); setButtons(); $('gps-status').textContent = 'Rit hervat'; return; }
@@ -757,6 +760,8 @@
   renderOdo(); renderModes(); renderRide(); setButtons();
   $('r-date').value = new Date().toISOString().slice(0, 10);
   renderDisplayTop();
+  try { history.scrollRestoration = 'manual'; } catch {}
+  window.scrollTo(0, 0);
   showTab('rit'); // standaard altijd de stats in beeld
   autoReconnect();
 
