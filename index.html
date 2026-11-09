@@ -37,32 +37,52 @@
   .bars i { display: block; width: 100%; background: var(--accent); border-radius: 6px 6px 2px 2px; min-height: 2px; margin: 4px 0; }
   .share { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--bg); margin: 6px 0 10px; }
   .share i { display: block; height: 100%; }
-  /* Rit-scherm in de stijl van een kleurendisplay op het stuur: altijd zwart */
+  /* Rit-scherm: zwart kleurendisplay, beeldvullend boven de navigatie, zonder scrollen */
+  body.rit { padding-bottom: 0; background: #020304; overflow: hidden; }
+  body.rit header { display: none; }
+  body.rit main { padding: 0; max-width: none; }
+  body.rit nav { background: #020304; border-top-color: #15191c; }
+  body.rit nav button { color: #6b767c; }
+  body.rit nav button[aria-current="page"] { color: var(--mode-c, #22d3ee); }
+  #tab-rit:not([hidden]) { display: flex; height: calc(100dvh - 64px - env(safe-area-inset-bottom)); }
   .display {
-    --mode: #3b82f6; background: radial-gradient(120% 80% at 50% 0%, #0c1114, #020304 70%);
-    color: #fff; border: 7px solid #17191b; border-radius: 24px; padding: 10px 12px 14px; margin-bottom: 14px;
-    box-shadow: 0 6px 20px rgba(0,0,0,.25), inset 0 0 24px #000;
+    --mode: #3b82f6; flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 4px;
+    background: radial-gradient(120% 70% at 50% 0%, #0c1216, #020304 70%); color: #fff;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 12px;
   }
-  .disp-top { display: flex; justify-content: center; align-items: center; gap: 14px; height: 24px; }
-  #disp-bt { color: #2f363b; transition: color .3s; }
-  #disp-bt.on { color: #22d3ee; filter: drop-shadow(0 0 4px #22d3ee); }
-  .gauge, .pas { width: 100%; display: block; }
+  .disp-top { display: flex; justify-content: space-between; align-items: center; }
+  .bt-btn {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px 4px 8px;
+    border-radius: 999px; border: 1px solid #222a2f; background: #0a0e10; color: #6b767c; font-size: 13px; font-weight: 600;
+  }
+  .bt-btn.on { color: #22d3ee; border-color: #155e6b; }
+  .bt-btn.on svg { filter: drop-shadow(0 0 4px #22d3ee); }
+  .disp-odo { color: #6b767c; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .gauge { flex: 0 1 auto; min-height: 0; width: 100%; max-width: 560px; max-height: 46dvh; aspect-ratio: 300 / 232; margin: 0 auto; }
   .gauge .outer { fill: none; stroke: #22d3ee; stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 4px #22d3ee); }
   .gauge .seg { fill: #1b2024; transition: fill .2s; }
   .gauge .seg.on { fill: #f59e0b; }
   .display text { fill: #fff; text-anchor: middle; font-weight: 800; font-family: system-ui, sans-serif; }
   .display .lbl { font-size: 17px; letter-spacing: .5px; }
   #speed { font-size: 76px; font-style: italic; letter-spacing: -3px; font-variant-numeric: tabular-nums; }
-  .display .unit-t { font-size: 13px; font-style: italic; }
-  .pas { cursor: pointer; margin-top: -6px; }
+  .display .unit-t { font-size: 13px; font-style: italic; fill: #8a959b; }
+  .display .side-v { font-size: 24px; font-style: italic; font-variant-numeric: tabular-nums; }
+  .display .side-l { font-size: 11px; fill: #22d3ee; letter-spacing: 1px; }
+  .pas { flex: 0 0 auto; height: min(100px, 14dvh); width: 100%; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .pas-line { fill: none; stroke: var(--mode); stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 5px var(--mode)); transition: stroke .3s; }
-  .pas-ring { fill: #05080a; stroke: #22d3ee; stroke-width: 4; }
-  #pas-num { font-size: 36px; fill: var(--mode); font-style: italic; transition: fill .3s; }
-  .disp-trip { text-align: center; margin-top: 4px; line-height: 1.05; }
-  .disp-trip span { display: block; color: #22d3ee; font-weight: 800; font-size: 17px; }
-  .disp-trip b { font-size: 52px; font-style: italic; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+  .display .mode-name { text-anchor: end; font-size: 12px; letter-spacing: 2px; fill: var(--mode); opacity: .7; font-weight: 700; transition: fill .3s; }
+  .pas-ring { fill: #05080a; stroke: #22d3ee; stroke-width: 4; filter: drop-shadow(0 0 4px #22d3ee); }
+  #bat-num { font-size: 28px; font-style: italic; font-variant-numeric: tabular-nums; }
+  #bat-num .pct-sign { font-size: 13px; fill: #8a959b; }
+  .disp-trip { display: flex; justify-content: space-around; text-align: center; line-height: 1.05; }
+  .disp-trip span { display: block; color: #22d3ee; font-weight: 800; font-size: 13px; letter-spacing: 1px; margin-bottom: 2px; }
+  .disp-trip b { font-size: clamp(28px, 6dvh, 44px); font-style: italic; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
   .disp-trip small { margin-left: 4px; color: #8a959b; font-weight: 700; }
-  .display .status { color: #8a959b; }
+  .display .status { color: #6b767c; font-size: 13px; margin: 2px 0 4px; min-height: 1.3em; }
+  .disp-ctrl { display: flex; gap: 10px; }
+  .disp-ctrl button { flex: 1; background: #0e1316; border-color: #222a2f; color: #e6efed; min-height: 52px; }
+  .disp-ctrl button.primary { background: var(--mode); border-color: var(--mode); color: var(--mode-on, #06080a); }
+  .disp-ctrl button:disabled { opacity: .35; }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
   .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c); margin-right: 6px; border: 1px solid var(--line); }
   * { box-sizing: border-box; }
@@ -153,52 +173,40 @@
   <section id="tab-rit">
     <div class="display" id="display">
       <div class="disp-top">
-        <span id="disp-bat" aria-label="Accu"></span>
-        <svg id="disp-bt" viewBox="0 0 32 18" width="30" height="17" aria-label="Bluetooth-verbinding"><g fill="none" stroke="currentColor" stroke-width="3"><rect x="2" y="3" width="16" height="12" rx="6"/><rect x="14" y="3" width="16" height="12" rx="6"/></g></svg>
+        <button class="bt-btn" id="btn-bt" aria-label="Fiets koppelen via Bluetooth">
+          <svg id="disp-bt" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>
+          <span id="bt-label">Koppel fiets</span>
+        </button>
+        <span class="disp-odo" id="disp-odo">0 km</span>
       </div>
-      <svg class="gauge" viewBox="0 0 300 190" aria-hidden="false">
+      <svg class="gauge" viewBox="0 0 300 232">
         <path class="outer" id="outer"/>
         <g id="segs"></g>
         <text x="150" y="74" class="lbl">SPEED</text>
         <text x="150" y="138" id="speed">0,0</text>
-        <text x="222" y="170" class="unit-t">KM/U</text>
+        <text x="150" y="166" class="unit-t">KM/U</text>
+        <text x="42" y="212" class="side-v" id="avg">0,0</text>
+        <text x="42" y="229" class="side-l">GEM</text>
+        <text x="258" y="212" class="side-v" id="max">0,0</text>
+        <text x="258" y="229" class="side-l">MAX</text>
       </svg>
-      <svg class="pas" id="pas" viewBox="0 0 300 92" role="button" tabindex="0" aria-label="Volgende ondersteuningsstand">
-        <path class="pas-line" d="M14 50 H92 C118 50 116 10 150 10 C184 10 182 50 208 50 H286"/>
-        <circle cx="150" cy="44" r="24" class="pas-ring"/>
-        <text x="150" y="58" id="pas-num">2</text>
-        <text x="150" y="88" class="lbl" id="pas-name">RIVER</text>
+      <svg class="pas" id="pas" viewBox="0 0 300 100" role="button" tabindex="0" aria-label="Tik om van ondersteuningsstand te wisselen">
+        <path class="pas-line" d="M14 58 H88 C116 58 112 14 150 14 C188 14 184 58 212 58 H286"/>
+        <text x="286" y="48" class="mode-name" id="pas-name">RIVER</text>
+        <circle cx="150" cy="54" r="30" class="pas-ring"/>
+        <text x="150" y="64" id="bat-num">100<tspan class="pct-sign">%</tspan></text>
+        <text x="150" y="99" class="side-l">ACCU</text>
       </svg>
-      <div class="disp-trip"><span>RIT</span><b id="dist">0,00</b><small>km</small></div>
+      <div class="disp-trip">
+        <div><span>RIT</span><b id="dist">0,00</b><small>km</small></div>
+        <div><span>RIJTIJD</span><b id="time">0:00:00</b></div>
+      </div>
       <div class="status" id="gps-status">Druk op Start om je rit te beginnen</div>
-    </div>
-    <div class="card">
-      <div class="stats" style="margin-top:0">
-        <div class="stat"><b id="time">0:00:00</b><span>rijtijd</span></div>
-        <div class="stat"><b id="avg">0,0</b><span>gem. km/u</span></div>
-        <div class="stat"><b id="max">0,0</b><span>max. km/u</span></div>
-        <div class="stat"><b id="disp-pct">100%</b><span>accu (geschat)</span></div>
+      <div class="disp-ctrl">
+        <button class="primary" id="btn-start">Start</button>
+        <button id="btn-pause" disabled>Pauze</button>
+        <button id="btn-stop" disabled>Stop</button>
       </div>
-    </div>
-    <div class="card">
-      <h2>Fiets (Bluetooth)</h2>
-      <div class="row" style="align-items:center">
-        <div class="grow" style="flex:1 1 auto">
-          <div class="title" id="bt-name" style="font-weight:600">Niet gekoppeld</div>
-          <div class="sub hint" id="bt-status" style="margin:0">Koppel je fiets; daarna start de rit vanzelf zodra hij verbonden is.</div>
-        </div>
-        <button class="small" id="btn-bt">Koppel fiets</button>
-      </div>
-    </div>
-    <div class="card">
-      <h2>Ondersteuning</h2>
-      <div class="modes" id="modes"></div>
-      <p class="hint">Kies de stand die je het meest gebruikt; die telt mee voor je accu-schatting.</p>
-    </div>
-    <div class="row">
-      <button class="primary" id="btn-start">Start</button>
-      <button id="btn-pause" disabled>Pauze</button>
-      <button class="danger" id="btn-stop" disabled>Stop</button>
     </div>
   </section>
 
@@ -367,6 +375,7 @@
     document.querySelectorAll('nav button').forEach((b) => b.dataset.tab === name ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
     document.querySelectorAll('main section').forEach((s) => (s.hidden = s.id !== 'tab-' + name));
     $('title').textContent = titles[name];
+    document.body.classList.toggle('rit', name === 'rit');
     if (name === 'log') renderLog();
     if (name === 'accu') renderAccu();
     if (name === 'stats') renderStats();
@@ -401,22 +410,18 @@
   }
   document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
-  function renderOdo() { $('odo').textContent = nf(state.odo, 0) + ' km'; }
+  function renderOdo() { $('odo').textContent = $('disp-odo').textContent = nf(state.odo, 0) + ' km'; }
 
   /* ---------- Ondersteuningsstand ---------- */
   function renderModes() {
-    $('modes').innerHTML = MODES.map((m) => `<button type="button" aria-pressed="${m === state.mode}" data-mode="${m}">${m}</button>`).join('');
     document.body.dataset.mode = state.mode;
     const meta = document.querySelector('meta[name=theme-color]');
     meta.content = MODE_COLOR[state.mode];
-    $('display').style.setProperty('--mode', state.mode === 'Uit' ? '#f5f5f5' : MODE_COLOR[state.mode]);
-    $('pas-num').textContent = MODES.indexOf(state.mode);
+    const mc = state.mode === 'Uit' ? '#f5f5f5' : MODE_COLOR[state.mode];
+    $('display').style.setProperty('--mode', mc);
+    document.body.style.setProperty('--mode-c', mc);
     $('pas-name').textContent = state.mode.toUpperCase();
   }
-  $('modes').addEventListener('click', (e) => {
-    const m = e.target.dataset.mode; if (!m) return;
-    state.mode = m; save(); renderModes();
-  });
 
   /* ---------- Fietscomputer ---------- */
   const IDLE_STOP = 5 * 60000; // na 5 min stilstand stopt de rit vanzelf
@@ -452,13 +457,13 @@
     document.querySelectorAll('#segs .seg').forEach((s, i) => s.classList.toggle('on', i < n));
   }
   function renderDisplayTop() {
-    const pct = currentPct().pct, bars = Math.ceil(pct / 20);
-    const col = pct > 40 ? '#4ade80' : pct > 15 ? '#fbbf24' : '#f87171';
-    $('disp-bat').innerHTML = `<svg viewBox="0 0 64 22" width="64" height="22"><path d="M5 2H2v18h3M59 2h3v18h-3" fill="none" stroke="${col}" stroke-width="3"/>` +
-      Array.from({ length: 5 }, (_, i) => `<rect x="${9 + i * 10}" y="5" width="6" height="12" rx="1" fill="${i < bars ? col : '#1b2024'}"/>`).join('') + '</svg>';
-    $('disp-pct').textContent = Math.round(pct) + '%';
-    $('disp-bt').classList.toggle('on', !!(typeof bike !== 'undefined' && bike.connected));
+    const pct = Math.round(currentPct().pct);
+    $('bat-num').firstChild.nodeValue = pct;
+    $('bat-num').style.fill = pct > 15 ? '#fff' : '#f87171';
+    const on = !!(typeof bike !== 'undefined' && bike.connected);
+    $('btn-bt').classList.toggle('on', on);
   }
+
   function nextMode() { state.mode = MODES[(MODES.indexOf(state.mode) + 1) % MODES.length]; save(); renderModes(); }
   $('pas').addEventListener('click', nextMode);
   $('pas').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nextMode(); } });
@@ -532,10 +537,11 @@
   const bike = { device: null, connected: false, retry: null };
   const btSupported = 'bluetooth' in navigator;
   function btUI(name, status) {
-    $('bt-name').textContent = name; $('bt-status').textContent = status;
-    $('btn-bt').textContent = bike.device ? (bike.connected ? 'Ontkoppel' : 'Verbind') : 'Koppel fiets';
+    $('bt-label').textContent = bike.connected ? name : status;
+    $('btn-bt').setAttribute('aria-label', `${name}: ${status}`);
     renderDisplayTop();
   }
+
   async function readBattery(server) {
     try {
       const svc = await server.getPrimaryService('battery_service');
@@ -559,13 +565,13 @@
       startRide('bt');
     } catch {
       bike.connected = false;
-      btUI(dev.name || 'Fiets', 'Niet in de buurt of staat uit. Opnieuw proberen…');
+      btUI(dev.name || 'Fiets', 'Zoeken…');
       scheduleReconnect();
     }
   }
   function onBikeDisconnect() {
     bike.connected = false;
-    btUI(bike.device.name || 'Fiets', 'Verbinding verbroken. Rit loopt door tot 5 min stilstand.');
+    btUI(bike.device.name || 'Fiets', 'Verbinding kwijt, zoeken…');
     scheduleReconnect();
   }
   function scheduleReconnect() {
@@ -574,8 +580,8 @@
     bike.retry = setTimeout(() => { if (!bike.connected && document.visibilityState === 'visible') connectBike(bike.device); else scheduleReconnect(); }, 15000);
   }
   $('btn-bt').addEventListener('click', async () => {
-    if (!btSupported) { toast('Bluetooth werkt alleen in Chrome op Android'); return; }
-    if (bike.connected) { clearTimeout(bike.retry); bike.device.gatt.disconnect(); bike.device = null; bike.connected = false; btUI(state.bike?.name || 'Niet gekoppeld', 'Ontkoppeld'); return; }
+    if (!btSupported) { toast('Bluetooth werkt alleen in Chrome op Android; starten kan met Start'); return; }
+    if (bike.connected) { clearTimeout(bike.retry); bike.device.gatt.disconnect(); bike.device = null; bike.connected = false; btUI(state.bike?.name || 'Fiets', 'Koppel fiets'); return; }
     if (bike.device) { connectBike(bike.device); return; }
     try {
       const dev = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: ['battery_service', 'cycling_speed_and_cadence'] });
@@ -584,15 +590,15 @@
   });
   // bij openen van de app: eerder gekoppelde fiets automatisch opnieuw verbinden
   async function autoReconnect() {
-    if (!btSupported) { btUI('Bluetooth niet beschikbaar', 'Open de app in Chrome op Android om je fiets te koppelen. Starten kan ook met de knop.'); $('btn-bt').disabled = true; return; }
+    if (!btSupported) { btUI('Bluetooth', 'Geen Bluetooth'); return; }
     if (!state.bike) return;
-    btUI(state.bike.name, 'Zoeken naar je fiets…');
+    btUI(state.bike.name, 'Zoeken…');
     try {
       const devs = navigator.bluetooth.getDevices ? await navigator.bluetooth.getDevices() : [];
       const dev = devs.find((d) => d.id === state.bike.id);
       if (dev) { connectBike(dev); return; }
     } catch {}
-    btUI(state.bike.name, 'Tik op Koppel fiets om opnieuw te verbinden.');
+    btUI(state.bike.name, 'Tik om te verbinden');
   }
   function setButtons() {
     $('btn-start').textContent = ride.paused ? 'Verder' : 'Start';
