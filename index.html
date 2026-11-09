@@ -201,8 +201,8 @@
           <path class="pas-line" d="M-1 64 C30 64 26 8 70 8 C114 8 110 64 141 64"/>
           <circle cx="70" cy="60" r="36" class="ring-track"/>
           <circle cx="70" cy="60" r="36" class="ring-level" id="bat-ring" pathLength="100" transform="rotate(-90 70 60)"/>
-          <text x="70" y="69" id="bat-num">100<tspan class="pct-sign">%</tspan></text>
-          <text x="70" y="112" class="side-l bat-l">ACCU</text>
+          <text x="70" y="69" id="bat-num">0<tspan class="pct-sign" id="bat-unit">km</tspan></text>
+          <text x="70" y="112" class="side-l bat-l">BEREIK</text>
         </svg>
         <i class="pas-flat"><b class="mode-name" id="pas-name">RIVER</b></i>
       </div>
@@ -431,6 +431,7 @@
     $('display').style.setProperty('--mode', mc);
     document.body.style.setProperty('--mode-c', mc);
     $('pas-name').textContent = state.mode.toUpperCase();
+    renderDisplayTop();
   }
 
   /* ---------- Fietscomputer ---------- */
@@ -467,8 +468,12 @@
     document.querySelectorAll('#segs .seg').forEach((s, i) => s.classList.toggle('on', i < n));
   }
   function renderDisplayTop() {
-    const pct = Math.round(currentPct().pct);
-    $('bat-num').firstChild.nodeValue = pct;
+    // cirkel: resterend bereik in km voor de huidige stand; de ring zelf toont het accupercentage
+    const pct = Math.round(currentPct().pct), b = state.battery, use = b.use[state.mode];
+    const km = use > 0 ? Math.round(((pct / 100) * b.cap) / use) : null;
+    $('bat-num').firstChild.nodeValue = km == null ? '∞' : km;
+    $('bat-unit').textContent = km == null ? '' : 'km';
+    $('pas').setAttribute('aria-label', `Bereik ${km == null ? 'onbeperkt' : km + ' km'} in ${state.mode}, accu ${pct}%. Tik om van stand te wisselen`);
     $('display').style.setProperty('--bat', pct > 40 ? '#4ade80' : pct > 15 ? '#fbbf24' : '#f87171');
     $('bat-ring').style.strokeDasharray = `${Math.max(pct, 0.5)} 100`;
     const on = !!(typeof bike !== 'undefined' && bike.connected);
