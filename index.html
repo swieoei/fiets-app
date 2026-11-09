@@ -68,11 +68,14 @@
   .display .unit-t { font-size: 13px; font-style: italic; fill: #8a959b; }
   .display .side-v { font-size: 24px; font-style: italic; font-variant-numeric: tabular-nums; }
   .display .side-l { font-size: 11px; fill: #22d3ee; letter-spacing: 1px; }
-  .pas { flex: 0 0 auto; height: min(100px, 14dvh); width: 100%; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .pas-line { fill: none; stroke: var(--mode); stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 5px var(--mode)); transition: stroke .3s; }
-  .display .mode-name { text-anchor: end; font-size: 12px; letter-spacing: 2px; fill: var(--mode); opacity: .7; font-weight: 700; transition: fill .3s; }
-  .pas-ring { fill: #05080a; stroke: #22d3ee; stroke-width: 4; filter: drop-shadow(0 0 4px #22d3ee); }
-  #bat-num { font-size: 28px; font-style: italic; font-variant-numeric: tabular-nums; }
+  .pas { --ph: min(118px, 16dvh); flex: 0 0 auto; display: flex; height: var(--ph); margin: 0 -16px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .pas-mid { height: 100%; flex: 0 0 auto; overflow: visible; }
+  .pas-flat { flex: 1; position: relative; height: 4px; margin-top: calc(var(--ph) * 64 / 114 - 2px); background: var(--mode); box-shadow: 0 0 8px var(--mode); transition: background .3s, box-shadow .3s; }
+  .pas-line { fill: none; stroke: var(--mode); stroke-width: 4; filter: drop-shadow(0 0 5px var(--mode)); transition: stroke .3s; }
+  .mode-name { position: absolute; right: 16px; bottom: 10px; font-size: 12px; letter-spacing: 2px; color: var(--mode); opacity: .75; font-weight: 700; font-style: normal; }
+  .ring-track { fill: #05080a; stroke: #1b2024; stroke-width: 6; }
+  .ring-level { fill: none; stroke: var(--mode); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 100 100; filter: drop-shadow(0 0 4px var(--mode)); transition: stroke-dasharray .6s, stroke .3s; }
+  #bat-num { font-size: 22px; font-style: italic; font-variant-numeric: tabular-nums; }
   #bat-num .pct-sign { font-size: 13px; fill: #8a959b; }
   .disp-trip { display: flex; justify-content: space-around; text-align: center; line-height: 1.05; }
   .disp-trip span { display: block; color: #22d3ee; font-weight: 800; font-size: 13px; letter-spacing: 1px; margin-bottom: 2px; }
@@ -162,7 +165,7 @@
   .toast.show { opacity: 1; }
 </style>
 </head>
-<body>
+<body class="rit">
 <header>
   <h1 id="title">Rit</h1>
   <div class="odo" id="odo">0 km</div>
@@ -190,13 +193,17 @@
         <text x="258" y="212" class="side-v" id="max">0,0</text>
         <text x="258" y="229" class="side-l">MAX</text>
       </svg>
-      <svg class="pas" id="pas" viewBox="0 0 300 100" role="button" tabindex="0" aria-label="Tik om van ondersteuningsstand te wisselen">
-        <path class="pas-line" d="M14 58 H88 C116 58 112 14 150 14 C188 14 184 58 212 58 H286"/>
-        <text x="286" y="48" class="mode-name" id="pas-name">RIVER</text>
-        <circle cx="150" cy="54" r="30" class="pas-ring"/>
-        <text x="150" y="64" id="bat-num">100<tspan class="pct-sign">%</tspan></text>
-        <text x="150" y="99" class="side-l">ACCU</text>
-      </svg>
+      <div class="pas" id="pas" role="button" tabindex="0" aria-label="Tik om van ondersteuningsstand te wisselen">
+        <i class="pas-flat"></i>
+        <svg class="pas-mid" viewBox="0 0 140 114">
+          <path class="pas-line" d="M-1 64 C30 64 26 8 70 8 C114 8 110 64 141 64"/>
+          <circle cx="70" cy="60" r="36" class="ring-track"/>
+          <circle cx="70" cy="60" r="36" class="ring-level" id="bat-ring" pathLength="100" transform="rotate(-90 70 60)"/>
+          <text x="70" y="69" id="bat-num">100<tspan class="pct-sign">%</tspan></text>
+          <text x="70" y="112" class="side-l">ACCU</text>
+        </svg>
+        <i class="pas-flat"><b class="mode-name" id="pas-name">RIVER</b></i>
+      </div>
       <div class="disp-trip">
         <div><span>RIT</span><b id="dist">0,00</b><small>km</small></div>
         <div><span>RIJTIJD</span><b id="time">0:00:00</b></div>
@@ -460,6 +467,7 @@
     const pct = Math.round(currentPct().pct);
     $('bat-num').firstChild.nodeValue = pct;
     $('bat-num').style.fill = pct > 15 ? '#fff' : '#f87171';
+    $('bat-ring').style.strokeDasharray = `${Math.max(pct, 0.5)} 100`;
     const on = !!(typeof bike !== 'undefined' && bike.connected);
     $('btn-bt').classList.toggle('on', on);
   }
