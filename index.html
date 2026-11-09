@@ -590,7 +590,7 @@
   function scheduleReconnect() {
     clearTimeout(bike.retry);
     if (!bike.device) return;
-    bike.retry = setTimeout(() => { if (!bike.connected && document.visibilityState === 'visible') connectBike(bike.device); else scheduleReconnect(); }, 15000);
+    bike.retry = setTimeout(() => { if (!bike.connected && document.visibilityState === 'visible') connectBike(bike.device); else scheduleReconnect(); }, 5000); // snel opnieuw proberen: zodra de fiets vrijkomt, pakt deze app hem
   }
   $('btn-bt').addEventListener('click', async () => {
     if (!btSupported) { toast('Bluetooth werkt alleen in Chrome op Android; starten kan met Start'); return; }
