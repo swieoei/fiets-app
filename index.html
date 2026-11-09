@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fiets</title>
+<meta name="description" content="Eigen fiets-app: GPS-fietscomputer, ritten- en onderhoudslog en accu-planner.">
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root {
+    --bg: #f4f6f5; --card: #ffffff; --text: #14201d; --muted: #5c6b67; --line: #dde4e2;
+    --accent: #0f766e; --accent-soft: #d5efec; --warn: #b45309; --warn-soft: #fdecd3;
+    --bad: #b91c1c; --bad-soft: #fde2e2; --ok: #15803d; --ok-soft: #dcf3e3;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1413; --card: #16201e; --text: #e6efed; --muted: #94a5a1; --line: #26332f;
+      --accent: #2dd4bf; --accent-soft: #123b37; --warn: #fbbf24; --warn-soft: #3a2c0c;
+      --bad: #f87171; --bad-soft: #3d1717; --ok: #4ade80; --ok-soft: #12321e;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+  header {
+    padding: calc(14px + env(safe-area-inset-top)) 16px 10px;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  }
+  header h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  header .odo { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+  main { padding: 0 16px; max-width: 640px; margin: 0 auto; }
+  section[hidden] { display: none; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+  .card h2 { font-size: 15px; margin: 0 0 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .big { font-size: 72px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; text-align: center; }
+  .unit { text-align: center; color: var(--muted); margin-top: 4px; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 16px; }
+  .stat { background: var(--bg); border-radius: 12px; padding: 10px 12px; }
+  .stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 13px; color: var(--muted); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row > * { flex: 1 1 0; }
+  button, select, input {
+    font: inherit; color: inherit; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card); padding: 12px 14px; min-height: 48px;
+  }
+  input, select { width: 100%; }
+  button { cursor: pointer; font-weight: 600; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--card); }
+  button.danger { color: var(--bad); }
+  button.small { min-height: 36px; padding: 6px 12px; font-size: 14px; flex: 0 0 auto; }
+  button:disabled { opacity: .45; cursor: default; }
+  .modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .modes button { padding: 10px 4px; font-size: 14px; }
+  .modes button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .status { font-size: 14px; color: var(--muted); text-align: center; margin-top: 10px; min-height: 1.4em; }
+  label { display: block; font-size: 14px; color: var(--muted); margin: 10px 0 4px; }
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .list li:first-child { border-top: 0; }
+  .list .grow { flex: 1; min-width: 0; }
+  .list .title { font-weight: 600; }
+  .list .sub { font-size: 13px; color: var(--muted); }
+  .pill { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.bad { background: var(--bad-soft); color: var(--bad); }
+  .empty { color: var(--muted); font-size: 14px; }
+  .range { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .range .stat b { font-size: 26px; }
+  input[type=range] { padding: 0; min-height: 32px; border: 0; background: none; accent-color: var(--accent); }
+  .pct { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  details summary { cursor: pointer; color: var(--accent); font-weight: 600; padding: 4px 0; }
+  .hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0; display: flex;
+    background: var(--card); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav button {
+    flex: 1; border: 0; border-radius: 0; background: none; min-height: 64px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font-size: 12px; font-weight: 600; color: var(--muted);
+  }
+  nav button svg { width: 24px; height: 24px; }
+  nav button[aria-current="page"] { color: var(--accent); }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px;
+    opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px);
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Rit</h1>
+  <div class="odo" id="odo">0 km</div>
+</header>
+
+<main>
+  <!-- RIT -->
+  <section id="tab-rit">
+    <div class="card">
+      <div class="big" id="speed">0,0</div>
+      <div class="unit">km/u</div>
+      <div class="stats">
+        <div class="stat"><b id="dist">0,00</b><span>km</span></div>
+        <div class="stat"><b id="time">0:00:00</b><span>rijtijd</span></div>
+        <div class="stat"><b id="avg">0,0</b><span>gem. km/u</span></div>
+        <div class="stat"><b id="max">0,0</b><span>max. km/u</span></div>
+      </div>
+      <div class="status" id="gps-status">Druk op Start om je rit te beginnen</div>
+    </div>
+    <div class="card">
+      <h2>Fiets (Bluetooth)</h2>
+      <div class="row" style="align-items:center">
+        <div class="grow" style="flex:1 1 auto">
+          <div class="title" id="bt-name" style="font-weight:600">Niet gekoppeld</div>
+          <div class="sub hint" id="bt-status" style="margin:0">Koppel je fiets; daarna start de rit vanzelf zodra hij verbonden is.</div>
+        </div>
+        <button class="small" id="btn-bt">Koppel fiets</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Ondersteuning</h2>
+      <div class="modes" id="modes"></div>
+      <p class="hint">Kies de stand die je het meest gebruikt; die telt mee voor je accu-schatting.</p>
+    </div>
+    <div class="row">
+      <button class="primary" id="btn-start">Start</button>
+      <button id="btn-pause" disabled>Pauze</button>
+      <button class="danger" id="btn-stop" disabled>Stop</button>
+    </div>
+  </section>
+
+  <!-- LOGBOEK -->
+  <section id="tab-log" hidden>
+    <div class="card">
+      <h2>Onderhoud</h2>
+      <ul class="list" id="maint-list"></ul>
+      <details>
+        <summary>Onderhoudspunt toevoegen</summary>
+        <label for="m-name">Naam</label>
+        <input id="m-name" placeholder="bijv. Remblokken controleren">
+        <div class="row">
+          <div><label for="m-km">Elke … km</label><input id="m-km" type="number" inputmode="numeric" min="0" placeholder="leeg = n.v.t."></div>
+          <div><label for="m-days">Elke … dagen</label><input id="m-days" type="number" inputmode="numeric" min="0" placeholder="leeg = n.v.t."></div>
+        </div>
+        <div style="margin-top:12px"><button class="primary" id="m-add" style="width:100%">Toevoegen</button></div>
+      </details>
+    </div>
+    <div class="card">
+      <h2>Ritten</h2>
+      <ul class="list" id="ride-list"></ul>
+      <details>
+        <summary>Rit handmatig toevoegen</summary>
+        <div class="row">
+          <div><label for="r-date">Datum</label><input id="r-date" type="date"></div>
+          <div><label for="r-km">Afstand (km)</label><input id="r-km" type="number" inputmode="decimal" step="0.1" min="0"></div>
+        </div>
+        <label for="r-mode">Ondersteuning</label>
+        <select id="r-mode"></select>
+        <div style="margin-top:12px"><button class="primary" id="r-add" style="width:100%">Toevoegen</button></div>
+      </details>
+    </div>
+    <div class="card">
+      <h2>Kilometerstand</h2>
+      <label for="odo-input">Totaal gefietst (km)</label>
+      <div class="row">
+        <input id="odo-input" type="number" inputmode="decimal" step="1" min="0">
+        <button class="small" id="odo-save">Opslaan</button>
+      </div>
+      <p class="hint">Neem de stand over van het display op je fiets; ritten tellen daarna automatisch op.</p>
+    </div>
+  </section>
+
+  <!-- ACCU -->
+  <section id="tab-accu" hidden>
+    <div class="card">
+      <h2>Huidige lading</h2>
+      <div class="pct" id="bat-pct">100%</div>
+      <input type="range" id="bat" min="0" max="100" step="5" value="100" aria-label="Accu-percentage">
+      <p class="hint" id="bat-auto"></p>
+    </div>
+    <div class="card">
+      <h2>Geschat bereik</h2>
+      <div class="range" id="range"></div>
+      <p class="hint">Schatting voor vlak terrein bij weinig wind. Heuvels, kou en tegenwind kosten meer.</p>
+    </div>
+    <div class="card">
+      <h2>Laden</h2>
+      <button class="primary" id="btn-charge" style="width:100%">Accu net vol geladen</button>
+      <ul class="list" id="charge-list" style="margin-top:8px"></ul>
+    </div>
+    <div class="card">
+      <details>
+        <summary>Accu-instellingen</summary>
+        <label for="cap">Capaciteit (Wh)</label>
+        <input id="cap" type="number" inputmode="numeric" min="100" step="25">
+        <p class="hint">Staat op de accu zelf, bijvoorbeeld 400, 500, 625 of 750 Wh.</p>
+        <div id="use-inputs"></div>
+        <p class="hint">Verbruik in Wh per km. Pas aan als je bereik in de praktijk anders uitvalt.</p>
+      </details>
+    </div>
+    <div class="card">
+      <details>
+        <summary>Back-up</summary>
+        <p class="hint">Je gegevens staan alleen op dit apparaat. Maak af en toe een back-up.</p>
+        <div class="row" style="margin-top:10px">
+          <button id="btn-export">Exporteren</button>
+          <button id="btn-import">Importeren</button>
+        </div>
+        <input type="file" id="import-file" accept="application/json" hidden>
+      </details>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-tab="rit" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-4M12 5V3M9 3h6"/></svg>Rit
+  </button>
+  <button data-tab="log">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>Logboek
+  </button>
+  <button data-tab="accu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="18" rx="2"/><path d="M10 2h4M13 8l-3 5h4l-3 5"/></svg>Accu
+  </button>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+  const MODES = ['Eco', 'Tour', 'Sport', 'Turbo'];
+  const KEY = 'fiets-app-v1';
+  const DAY = 86400000;
+
+  const defaults = () => ({
+    odo: 0,
+    mode: 'Tour',
+    rides: [],
+    charges: [],
+    battery: { pct: 100, setAt: Date.now(), setOdo: 0, cap: 500, use: { Eco: 6, Tour: 9, Sport: 12, Turbo: 16 } },
+    maint: [
+      { id: 1, name: 'Ketting schoonmaken en smeren', km: 300, days: null, lastKm: 0, lastAt: Date.now() },
+      { id: 2, name: 'Bandenspanning controleren', km: null, days: 14, lastKm: 0, lastAt: Date.now() },
+      { id: 3, name: 'Remmen controleren', km: 1000, days: 180, lastKm: 0, lastAt: Date.now() },
+      { id: 4, name: 'Servicebeurt bij de fietsenmaker', km: 3000, days: 365, lastKm: 0, lastAt: Date.now() },
+    ],
+  });
+
+  let state;
+  try { state = Object.assign(defaults(), JSON.parse(localStorage.getItem(KEY)) || {}); }
+  catch { state = defaults(); }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+  const $ = (id) => document.getElementById(id);
+  const nf = (n, d = 1) => n.toLocaleString('nl-NL', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const dateStr = (t) => new Date(t).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' });
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const toast = (msg) => { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2200); };
+
+  /* ---------- Tabs ---------- */
+  const titles = { rit: 'Rit', log: 'Logboek', accu: 'Accu' };
+  function showTab(name) {
+    document.querySelectorAll('nav button').forEach((b) => b.dataset.tab === name ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
+    document.querySelectorAll('main section').forEach((s) => (s.hidden = s.id !== 'tab-' + name));
+    $('title').textContent = titles[name];
+    if (name === 'log') renderLog();
+    if (name === 'accu') renderAccu();
+  }
+  document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  function renderOdo() { $('odo').textContent = nf(state.odo, 0) + ' km'; }
+
+  /* ---------- Ondersteuningsstand ---------- */
+  function renderModes() {
+    $('modes').innerHTML = MODES.map((m) => `<button type="button" aria-pressed="${m === state.mode}" data-mode="${m}">${m}</button>`).join('');
+  }
+  $('modes').addEventListener('click', (e) => {
+    const m = e.target.dataset.mode; if (!m) return;
+    state.mode = m; save(); renderModes();
+  });
+
+  /* ---------- Fietscomputer ---------- */
+  const IDLE_STOP = 5 * 60000; // na 5 min stilstand stopt de rit vanzelf
+  const ride = { active: false, paused: false, watch: null, dist: 0, moving: 0, max: 0, last: null, started: 0, lastMove: 0, tick: null, lock: null };
+
+  function haversine(a, b) {
+    const R = 6371000, r = Math.PI / 180;
+    const dLat = (b.latitude - a.latitude) * r, dLon = (b.longitude - a.longitude) * r;
+    const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.latitude * r) * Math.cos(b.latitude * r) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(x));
+  }
+  function fmtTime(ms) {
+    const s = Math.floor(ms / 1000);
+    return `${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  }
+  function renderRide(speed = 0) {
+    $('speed').textContent = nf(speed);
+    $('dist').textContent = nf(ride.dist / 1000, 2);
+    $('time').textContent = fmtTime(ride.moving);
+    $('avg').textContent = nf(ride.moving > 0 ? (ride.dist / 1000) / (ride.moving / 3600000) : 0);
+    $('max').textContent = nf(ride.max);
+  }
+  function onPos(p) {
+    const c = p.coords, now = p.timestamp;
+    if (c.accuracy > 35) { $('gps-status').textContent = `Wachten op beter GPS-signaal (±${Math.round(c.accuracy)} m)`; return; }
+    $('gps-status').textContent = `GPS actief (±${Math.round(c.accuracy)} m)`;
+    let speed = c.speed != null && c.speed >= 0 ? c.speed * 3.6 : null;
+    if (ride.last && !ride.paused) {
+      const d = haversine(ride.last.coords, c), dt = now - ride.last.timestamp;
+      if (dt > 0) {
+        const calc = (d / dt) * 3600;
+        if (speed == null) speed = calc;
+        // negeer ruis bij stilstand en onrealistische sprongen
+        if (d > Math.max(3, c.accuracy * 0.5) && calc < 80) {
+          ride.dist += d;
+          if (calc > 2) { ride.moving += Math.min(dt, 30000); ride.lastMove = now; }
+          ride.max = Math.max(ride.max, Math.min(speed || 0, 80));
+          ride.last = p;
+        } else if (!ride.last) ride.last = p;
+      }
+    } else ride.last = p;
+    renderRide(speed && speed > 1.5 ? speed : 0);
+  }
+  function onErr(e) {
+    const msg = { 1: 'Geen toestemming voor locatie. Sta locatie toe in de browser.', 2: 'Locatie niet beschikbaar.', 3: 'GPS reageert traag…' }[e.code] || 'GPS-fout';
+    $('gps-status').textContent = msg;
+  }
+  async function keepAwake() {
+    try { if ('wakeLock' in navigator) ride.lock = await navigator.wakeLock.request('screen'); } catch {}
+  }
+  document.addEventListener('visibilitychange', () => { if (ride.active && document.visibilityState === 'visible') keepAwake(); });
+
+  function startRide(reason) {
+    if (!('geolocation' in navigator)) { toast('Deze browser ondersteunt geen GPS'); return; }
+    if (ride.active) return;
+    showTab('rit');
+    Object.assign(ride, { active: true, paused: false, dist: 0, moving: 0, max: 0, last: null, started: Date.now(), lastMove: Date.now() });
+    ride.watch = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+    ride.tick = setInterval(() => {
+      // automatisch stoppen na 5 minuten stilstand; stilstand telt niet mee in de rijtijd
+      if (!ride.paused && Date.now() - ride.lastMove >= IDLE_STOP) { stopRide('idle'); return; }
+      renderRide(Number($('speed').textContent.replace(',', '.')) || 0);
+    }, 1000);
+    keepAwake(); setButtons(); renderRide();
+    $('gps-status').textContent = reason === 'bt' ? 'Fiets verbonden, rit gestart. GPS zoeken…' : 'GPS zoeken…';
+  }
+  function stopRide(reason) {
+    if (!ride.active) return;
+    if (ride.watch != null) navigator.geolocation.clearWatch(ride.watch);
+    clearInterval(ride.tick);
+    try { ride.lock && ride.lock.release(); } catch {}
+    const km = ride.dist / 1000;
+    if (km >= 0.05) {
+      // eindtijd = laatste beweging, dus de 5 minuten stilstand vallen eraf
+      addRide({ at: ride.started, end: ride.lastMove, km, mins: ride.moving / 60000, max: ride.max, mode: state.mode });
+      toast(reason === 'idle' ? `5 min stilgestaan: rit van ${nf(km, 2)} km opgeslagen` : `Rit opgeslagen: ${nf(km, 2)} km`);
+    } else toast(reason === 'idle' ? '5 min stilgestaan: rit gestopt (te kort om op te slaan)' : 'Rit te kort, niet opgeslagen');
+    Object.assign(ride, { active: false, paused: false, watch: null, last: null });
+    setButtons(); renderRide(0);
+    $('gps-status').textContent = bike.connected ? 'Fiets verbonden. Rit start opnieuw na het opnieuw verbinden of met Start.' : 'Druk op Start om je rit te beginnen';
+  }
+  $('btn-start').addEventListener('click', () => {
+    if (ride.paused) { ride.paused = false; ride.last = null; ride.lastMove = Date.now(); setButtons(); $('gps-status').textContent = 'Rit hervat'; return; }
+    startRide('manual');
+  });
+  $('btn-pause').addEventListener('click', () => { ride.paused = true; setButtons(); $('gps-status').textContent = 'Gepauzeerd'; renderRide(0); });
+  $('btn-stop').addEventListener('click', () => stopRide('manual'));
+
+  /* ---------- Bluetooth: verbinden = rit starten ---------- */
+  const bike = { device: null, connected: false, retry: null };
+  const btSupported = 'bluetooth' in navigator;
+  function btUI(name, status) {
+    $('bt-name').textContent = name; $('bt-status').textContent = status;
+    $('btn-bt').textContent = bike.device ? (bike.connected ? 'Ontkoppel' : 'Verbind') : 'Koppel fiets';
+  }
+  async function readBattery(server) {
+    try {
+      const svc = await server.getPrimaryService('battery_service');
+      const ch = await svc.getCharacteristic('battery_level');
+      const set = (v) => { Object.assign(state.battery, { pct: v, setAt: Date.now(), setOdo: state.odo }); save(); };
+      set((await ch.readValue()).getUint8(0));
+      try { await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', (e) => set(e.target.value.getUint8(0))); } catch {}
+      return true;
+    } catch { return false; }
+  }
+  async function connectBike(dev) {
+    bike.device = dev;
+    if (!dev._fietsListener) { dev.addEventListener('gattserverdisconnected', onBikeDisconnect); dev._fietsListener = true; }
+    btUI(dev.name || 'Fiets', 'Verbinden…');
+    try {
+      const server = await dev.gatt.connect();
+      bike.connected = true; clearTimeout(bike.retry);
+      state.bike = { id: dev.id, name: dev.name || 'Fiets' }; save();
+      const bat = await readBattery(server);
+      btUI(dev.name || 'Fiets', 'Verbonden' + (bat ? ' · accu wordt uitgelezen' : ''));
+      startRide('bt');
+    } catch {
+      bike.connected = false;
+      btUI(dev.name || 'Fiets', 'Niet in de buurt of staat uit. Opnieuw proberen…');
+      scheduleReconnect();
+    }
+  }
+  function onBikeDisconnect() {
+    bike.connected = false;
+    btUI(bike.device.name || 'Fiets', 'Verbinding verbroken. Rit loopt door tot 5 min stilstand.');
+    scheduleReconnect();
+  }
+  function scheduleReconnect() {
+    clearTimeout(bike.retry);
+    if (!bike.device) return;
+    bike.retry = setTimeout(() => { if (!bike.connected && document.visibilityState === 'visible') connectBike(bike.device); else scheduleReconnect(); }, 15000);
+  }
+  $('btn-bt').addEventListener('click', async () => {
+    if (!btSupported) { toast('Bluetooth werkt alleen in Chrome op Android'); return; }
+    if (bike.connected) { clearTimeout(bike.retry); bike.device.gatt.disconnect(); bike.device = null; bike.connected = false; btUI(state.bike?.name || 'Niet gekoppeld', 'Ontkoppeld'); return; }
+    if (bike.device) { connectBike(bike.device); return; }
+    try {
+      const dev = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: ['battery_service', 'cycling_speed_and_cadence'] });
+      connectBike(dev);
+    } catch { /* gebruiker annuleerde */ }
+  });
+  // bij openen van de app: eerder gekoppelde fiets automatisch opnieuw verbinden
+  async function autoReconnect() {
+    if (!btSupported) { btUI('Bluetooth niet beschikbaar', 'Open de app in Chrome op Android om je fiets te koppelen. Starten kan ook met de knop.'); $('btn-bt').disabled = true; return; }
+    if (!state.bike) return;
+    btUI(state.bike.name, 'Zoeken naar je fiets…');
+    try {
+      const devs = navigator.bluetooth.getDevices ? await navigator.bluetooth.getDevices() : [];
+      const dev = devs.find((d) => d.id === state.bike.id);
+      if (dev) { connectBike(dev); return; }
+    } catch {}
+    btUI(state.bike.name, 'Tik op Koppel fiets om opnieuw te verbinden.');
+  }
+  function setButtons() {
+    $('btn-start').textContent = ride.paused ? 'Verder' : 'Start';
+    $('btn-start').disabled = ride.active && !ride.paused;
+    $('btn-pause').disabled = !ride.active || ride.paused;
+    $('btn-stop').disabled = !ride.active;
+  }
+  function addRide(r) {
+    r.id = Date.now();
+    state.rides.unshift(r);
+    state.odo += r.km;
+    save(); renderOdo();
+  }
+
+  /* ---------- Logboek ---------- */
+  function maintStatus(m) {
+    const kmLeft = m.km ? m.km - (state.odo - m.lastKm) : Infinity;
+    const daysLeft = m.days ? m.days - (Date.now() - m.lastAt) / DAY : Infinity;
+    const parts = [];
+    if (m.km) parts.push(kmLeft <= 0 ? `${nf(-kmLeft, 0)} km over tijd` : `nog ${nf(kmLeft, 0)} km`);
+    if (m.days) parts.push(daysLeft <= 0 ? `${Math.ceil(-daysLeft)} dagen over tijd` : `nog ${Math.ceil(daysLeft)} dagen`);
+    const fracKm = m.km ? kmLeft / m.km : 1, fracD = m.days ? daysLeft / m.days : 1;
+    const frac = Math.min(fracKm, fracD);
+    const cls = frac <= 0 ? 'bad' : frac < 0.15 ? 'warn' : 'ok';
+    const label = frac <= 0 ? 'Nu doen' : frac < 0.15 ? 'Binnenkort' : 'Op orde';
+    return { text: parts.join(' · '), cls, label, frac };
+  }
+  function renderLog() {
+    const items = state.maint.map((m) => ({ m, s: maintStatus(m) })).sort((a, b) => a.s.frac - b.s.frac);
+    $('maint-list').innerHTML = items.length ? items.map(({ m, s }) => `
+      <li>
+        <div class="grow">
+          <div class="title">${esc(m.name)}</div>
+          <div class="sub">${s.text} · laatst ${dateStr(m.lastAt)}</div>
+        </div>
+        <span class="pill ${s.cls}">${s.label}</span>
+        <button class="small" data-done="${m.id}">Gedaan</button>
+      </li>`).join('') : '<li class="empty">Nog geen onderhoudspunten</li>';
+
+    $('ride-list').innerHTML = state.rides.length ? state.rides.slice(0, 50).map((r) => `
+      <li>
+        <div class="grow">
+          <div class="title">${nf(r.km, 1)} km${r.mins ? ` · ${Math.round(r.mins)} min` : ''}</div>
+          <div class="sub">${dateStr(r.at)} · ${esc(r.mode)}${r.mins ? ` · gem. ${nf(r.km / (r.mins / 60))} km/u` : ''}</div>
+        </div>
+        <button class="small danger" data-del="${r.id}" aria-label="Rit verwijderen">✕</button>
+      </li>`).join('') : '<li class="empty">Nog geen ritten. Start een rit of voeg er een toe.</li>';
+    $('odo-input').value = Math.round(state.odo);
+  }
+  $('maint-list').addEventListener('click', (e) => {
+    const id = Number(e.target.dataset.done); if (!id) return;
+    const m = state.maint.find((x) => x.id === id);
+    m.lastKm = state.odo; m.lastAt = Date.now(); save(); renderLog(); toast(`${m.name}: afgevinkt`);
+  });
+  $('ride-list').addEventListener('click', (e) => {
+    const id = Number(e.target.dataset.del); if (!id) return;
+    const r = state.rides.find((x) => x.id === id);
+    if (!confirm(`Rit van ${nf(r.km, 1)} km verwijderen?`)) return;
+    state.rides = state.rides.filter((x) => x.id !== id);
+    state.odo = Math.max(0, state.odo - r.km); save(); renderLog(); renderOdo();
+  });
+  $('m-add').addEventListener('click', () => {
+    const name = $('m-name').value.trim(), km = Number($('m-km').value) || null, days = Number($('m-days').value) || null;
+    if (!name || (!km && !days)) { toast('Vul een naam en een interval in'); return; }
+    state.maint.push({ id: Date.now(), name, km, days, lastKm: state.odo, lastAt: Date.now() });
+    $('m-name').value = $('m-km').value = $('m-days').value = '';
+    save(); renderLog(); toast('Onderhoudspunt toegevoegd');
+  });
+  $('r-mode').innerHTML = MODES.map((m) => `<option>${m}</option>`).join('');
+  $('r-add').addEventListener('click', () => {
+    const km = Number($('r-km').value), d = $('r-date').value;
+    if (!km || km <= 0) { toast('Vul een afstand in'); return; }
+    addRide({ at: d ? new Date(d + 'T12:00').getTime() : Date.now(), km, mins: 0, max: 0, mode: $('r-mode').value });
+    $('r-km').value = ''; renderLog(); toast('Rit toegevoegd');
+  });
+  $('odo-save').addEventListener('click', () => {
+    const v = Number($('odo-input').value);
+    if (!(v >= 0)) return;
+    const diff = v - state.odo;
+    state.odo = v;
+    // onderhoudsstanden meeschuiven zodat een correctie geen achterstand veroorzaakt
+    state.maint.forEach((m) => (m.lastKm += diff));
+    state.battery.setOdo += diff;
+    save(); renderOdo(); renderLog(); toast('Kilometerstand opgeslagen');
+  });
+
+  /* ---------- Accu ---------- */
+  function currentPct() {
+    const b = state.battery;
+    const rides = state.rides.filter((r) => r.at >= b.setAt);
+    const usedWh = rides.reduce((s, r) => s + r.km * (b.use[r.mode] || b.use.Tour), 0);
+    return { pct: Math.max(0, b.pct - (usedWh / b.cap) * 100), rides };
+  }
+  function renderAccu() {
+    const b = state.battery, { pct, rides } = currentPct();
+    $('bat').value = Math.round(pct / 5) * 5;
+    $('bat-pct').textContent = Math.round(pct) + '%';
+    $('bat-auto').textContent = rides.length
+      ? `Geschat: ${b.pct}% op ${dateStr(b.setAt)}, min ${rides.length} rit(ten) sindsdien. Schuif om te corrigeren naar wat je fiets aangeeft.`
+      : 'Schuif naar het percentage dat je fiets aangeeft.';
+    const wh = (pct / 100) * b.cap;
+    $('range').innerHTML = MODES.map((m) => `<div class="stat"><b>${nf(wh / b.use[m], 0)} km</b><span>${m}</span></div>`).join('');
+    $('charge-list').innerHTML = state.charges.length ? state.charges.slice(0, 8).map((c, i) => {
+      const next = i === 0 ? state.odo : state.charges[i - 1].odo;
+      return `<li><div class="grow"><div class="title">${dateStr(c.at)}</div><div class="sub">${nf(next - c.odo, 0)} km ${i === 0 ? 'sinds deze lading' : 'op deze lading'}</div></div></li>`;
+    }).join('') : '<li class="empty">Nog niet geladen via de app</li>';
+    $('cap').value = b.cap;
+    $('use-inputs').innerHTML = MODES.map((m) => `<label for="use-${m}">${m} (Wh/km)</label><input id="use-${m}" data-use="${m}" type="number" inputmode="decimal" step="0.5" min="1" value="${b.use[m]}">`).join('');
+  }
+  $('bat').addEventListener('input', (e) => {
+    Object.assign(state.battery, { pct: Number(e.target.value), setAt: Date.now(), setOdo: state.odo });
+    save(); renderAccu();
+  });
+  $('btn-charge').addEventListener('click', () => {
+    state.charges.unshift({ at: Date.now(), odo: state.odo });
+    Object.assign(state.battery, { pct: 100, setAt: Date.now(), setOdo: state.odo });
+    save(); renderAccu(); toast('Laadmoment opgeslagen');
+  });
+  $('cap').addEventListener('change', (e) => { const v = Number(e.target.value); if (v >= 100) { state.battery.cap = v; save(); renderAccu(); } });
+  $('use-inputs').addEventListener('change', (e) => {
+    const m = e.target.dataset.use, v = Number(e.target.value);
+    if (m && v > 0) { state.battery.use[m] = v; save(); renderAccu(); }
+  });
+
+  /* ---------- Back-up ---------- */
+  $('btn-export').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `fiets-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $('btn-import').addEventListener('click', () => $('import-file').click());
+  $('import-file').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      if (!Array.isArray(data.rides) || !data.battery) throw new Error();
+      if (!confirm('Huidige gegevens vervangen door de back-up?')) return;
+      state = Object.assign(defaults(), data); save();
+      renderOdo(); renderModes(); renderAccu(); toast('Back-up teruggezet');
+    } catch { toast('Dit is geen geldig back-upbestand'); }
+    e.target.value = '';
+  });
+
+  /* ---------- Start ---------- */
+  renderOdo(); renderModes(); renderRide(); setButtons();
+  $('r-date').value = new Date().toISOString().slice(0, 10);
+  showTab('rit'); // standaard altijd de stats in beeld
+  autoReconnect();
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
