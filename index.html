@@ -24,6 +24,22 @@
       color-scheme: dark;
     }
   }
+  /* Thema volgt de ondersteuningsstand, in de kleuren van het led-display op de fiets */
+  body { --on-accent: #fff; --accent-ink: var(--accent); }
+  body[data-mode="Uit"]   { --accent: light-dark(#d4d8d7, #f5f5f5); --on-accent: #111; --accent-ink: var(--text); --accent-soft: light-dark(#eceeed, #2a2f2e); }
+  body[data-mode="Eco"]   { --accent: light-dark(#16a34a, #22c55e); --on-accent: light-dark(#fff, #052e16); --accent-ink: light-dark(#15803d, #4ade80); --accent-soft: light-dark(#dcfce7, #14351f); }
+  body[data-mode="Tour"]  { --accent: light-dark(#2563eb, #3b82f6); --on-accent: #fff; --accent-ink: light-dark(#1d4ed8, #60a5fa); --accent-soft: light-dark(#dbeafe, #172a4d); }
+  body[data-mode="Sport"] { --accent: light-dark(#ea580c, #fb923c); --on-accent: light-dark(#fff, #2a1205); --accent-ink: light-dark(#c2410c, #fb923c); --accent-soft: light-dark(#ffedd5, #3d2210); }
+  body[data-mode="Turbo"] { --accent: light-dark(#9333ea, #a855f7); --on-accent: #fff; --accent-ink: light-dark(#7e22ce, #c084fc); --accent-soft: light-dark(#f3e8ff, #2e1748); }
+  header { border-bottom: 4px solid var(--accent); margin-bottom: 14px; transition: border-color .3s; }
+  .big { color: var(--accent-ink); transition: color .3s; }
+  .bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin-top: 6px; }
+  .bars div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 11px; color: var(--muted); }
+  .bars i { display: block; width: 100%; background: var(--accent); border-radius: 6px 6px 2px 2px; min-height: 2px; margin: 4px 0; }
+  .share { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--bg); margin: 6px 0 10px; }
+  .share i { display: block; height: 100%; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c); margin-right: 6px; border: 1px solid var(--line); }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
@@ -55,13 +71,13 @@
   }
   input, select { width: 100%; }
   button { cursor: pointer; font-weight: 600; }
-  button.primary { background: var(--accent); border-color: var(--accent); color: var(--card); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); transition: background .3s; }
   button.danger { color: var(--bad); }
   button.small { min-height: 36px; padding: 6px 12px; font-size: 14px; flex: 0 0 auto; }
   button:disabled { opacity: .45; cursor: default; }
-  .modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  .modes button { padding: 10px 4px; font-size: 14px; }
-  .modes button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .modes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .modes button { padding: 10px 2px; font-size: 13px; }
+  .modes button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .status { font-size: 14px; color: var(--muted); text-align: center; margin-top: 10px; min-height: 1.4em; }
   label { display: block; font-size: 14px; color: var(--muted); margin: 10px 0 4px; }
   .list { list-style: none; margin: 0; padding: 0; }
@@ -79,7 +95,7 @@
   .range .stat b { font-size: 26px; }
   input[type=range] { padding: 0; min-height: 32px; border: 0; background: none; accent-color: var(--accent); }
   .pct { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  details summary { cursor: pointer; color: var(--accent); font-weight: 600; padding: 4px 0; }
+  details summary { cursor: pointer; color: var(--accent-ink); font-weight: 600; padding: 4px 0; }
   .hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
   nav {
     position: fixed; left: 0; right: 0; bottom: 0; display: flex;
@@ -92,7 +108,7 @@
     font-size: 12px; font-weight: 600; color: var(--muted);
   }
   nav button svg { width: 24px; height: 24px; }
-  nav button[aria-current="page"] { color: var(--accent); }
+  nav button[aria-current="page"] { color: var(--accent-ink); }
   .toast {
     position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translateX(-50%);
     background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px;
@@ -184,6 +200,27 @@
     </div>
   </section>
 
+  <!-- TOTAAL -->
+  <section id="tab-stats" hidden>
+    <div class="card">
+      <h2>Alle ritten</h2>
+      <div class="stats" id="tot-stats" style="margin-top:0"></div>
+    </div>
+    <div class="card">
+      <h2>Periode</h2>
+      <div class="stats" id="per-stats" style="margin-top:0"></div>
+    </div>
+    <div class="card">
+      <h2>Km per week</h2>
+      <div class="bars" id="week-bars"></div>
+    </div>
+    <div class="card">
+      <h2>Km per ondersteuningsstand</h2>
+      <div class="share" id="mode-share"></div>
+      <div class="legend" id="mode-legend"></div>
+    </div>
+  </section>
+
   <!-- ACCU -->
   <section id="tab-accu" hidden>
     <div class="card">
@@ -233,6 +270,9 @@
   <button data-tab="log">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>Logboek
   </button>
+  <button data-tab="stats">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Totaal
+  </button>
   <button data-tab="accu">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="18" rx="2"/><path d="M10 2h4M13 8l-3 5h4l-3 5"/></svg>Accu
   </button>
@@ -242,7 +282,9 @@
 <script>
 (() => {
   'use strict';
-  const MODES = ['Eco', 'Tour', 'Sport', 'Turbo'];
+  const MODES = ['Uit', 'Eco', 'Tour', 'Sport', 'Turbo'];
+  const ASSIST = MODES.slice(1); // standen die accu verbruiken
+  const MODE_COLOR = { Uit: '#e5e7eb', Eco: '#22c55e', Tour: '#3b82f6', Sport: '#fb923c', Turbo: '#a855f7' };
   const KEY = 'fiets-app-v1';
   const DAY = 86400000;
 
@@ -251,7 +293,7 @@
     mode: 'Tour',
     rides: [],
     charges: [],
-    battery: { pct: 100, setAt: Date.now(), setOdo: 0, cap: 500, use: { Eco: 6, Tour: 9, Sport: 12, Turbo: 16 } },
+    battery: { pct: 100, setAt: Date.now(), setOdo: 0, cap: 500, use: { Uit: 0, Eco: 6, Tour: 9, Sport: 12, Turbo: 16 } },
     maint: [
       { id: 1, name: 'Ketting schoonmaken en smeren', km: 300, days: null, lastKm: 0, lastAt: Date.now() },
       { id: 2, name: 'Bandenspanning controleren', km: null, days: 14, lastKm: 0, lastAt: Date.now() },
@@ -263,6 +305,7 @@
   let state;
   try { state = Object.assign(defaults(), JSON.parse(localStorage.getItem(KEY)) || {}); }
   catch { state = defaults(); }
+  state.battery.use.Uit ??= 0;
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 
   const $ = (id) => document.getElementById(id);
@@ -272,13 +315,42 @@
   const toast = (msg) => { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2200); };
 
   /* ---------- Tabs ---------- */
-  const titles = { rit: 'Rit', log: 'Logboek', accu: 'Accu' };
+  const titles = { rit: 'Rit', log: 'Logboek', stats: 'Totaal', accu: 'Accu' };
   function showTab(name) {
     document.querySelectorAll('nav button').forEach((b) => b.dataset.tab === name ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
     document.querySelectorAll('main section').forEach((s) => (s.hidden = s.id !== 'tab-' + name));
     $('title').textContent = titles[name];
     if (name === 'log') renderLog();
     if (name === 'accu') renderAccu();
+    if (name === 'stats') renderStats();
+  }
+
+  /* ---------- Statistiek over alle ritten ---------- */
+  function sumKm(from) { return state.rides.filter((r) => r.at >= from).reduce((s, r) => s + r.km, 0); }
+  function weekStart(t) { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); }
+  function renderStats() {
+    const R = state.rides, km = R.reduce((s, r) => s + r.km, 0);
+    const timed = R.filter((r) => r.mins > 0), tKm = timed.reduce((s, r) => s + r.km, 0), tMin = timed.reduce((s, r) => s + r.mins, 0);
+    const longest = R.reduce((m, r) => Math.max(m, r.km), 0), top = R.reduce((m, r) => Math.max(m, r.max || 0), 0);
+    const hm = (min) => `${Math.floor(min / 60)}u ${String(Math.round(min % 60)).padStart(2, '0')}m`;
+    const stat = (v, l) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`;
+    $('tot-stats').innerHTML = [
+      stat(R.length, 'ritten'), stat(nf(km, 0), 'km in totaal'),
+      stat(hm(tMin), 'rijtijd'), stat(tMin ? nf(tKm / (tMin / 60)) : '-', 'gem. km/u'),
+      stat(nf(longest, 1), 'langste rit (km)'), stat(nf(top), 'hoogste km/u'),
+    ].join('');
+    const now = new Date(), y = new Date(now.getFullYear(), 0, 1).getTime(), m = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    $('per-stats').innerHTML = [
+      stat(nf(sumKm(weekStart(Date.now())), 0), 'km deze week'), stat(nf(sumKm(m), 0), 'km deze maand'),
+      stat(nf(sumKm(y), 0), 'km dit jaar'), stat(R.length ? nf(km / R.length, 1) : '-', 'gem. km per rit'),
+    ].join('');
+    const weeks = [];
+    for (let i = 7; i >= 0; i--) { const s = weekStart(Date.now()) - i * 7 * DAY; weeks.push({ s, km: R.filter((r) => r.at >= s && r.at < s + 7 * DAY).reduce((a, r) => a + r.km, 0) }); }
+    const maxW = Math.max(1, ...weeks.map((w) => w.km));
+    $('week-bars').innerHTML = weeks.map((w) => `<div title="${nf(w.km, 1)} km">${w.km ? nf(w.km, 0) : ''}<i style="height:${(w.km / maxW) * 80}%"></i>${new Date(w.s).toLocaleDateString('nl-NL', { day: 'numeric', month: 'numeric' })}</div>`).join('');
+    const per = MODES.map((md) => ({ md, km: R.filter((r) => r.mode === md).reduce((a, r) => a + r.km, 0) })).filter((x) => x.km > 0);
+    $('mode-share').innerHTML = per.map((x) => `<i style="width:${(x.km / km) * 100}%;background:${MODE_COLOR[x.md]}"></i>`).join('');
+    $('mode-legend').innerHTML = per.length ? per.map((x) => `<span style="--c:${MODE_COLOR[x.md]}">${x.md} ${nf(x.km, 0)} km (${Math.round((x.km / km) * 100)}%)</span>`).join('') : '<span class="empty">Nog geen ritten</span>';
   }
   document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
@@ -287,6 +359,9 @@
   /* ---------- Ondersteuningsstand ---------- */
   function renderModes() {
     $('modes').innerHTML = MODES.map((m) => `<button type="button" aria-pressed="${m === state.mode}" data-mode="${m}">${m}</button>`).join('');
+    document.body.dataset.mode = state.mode;
+    const meta = document.querySelector('meta[name=theme-color]');
+    meta.content = MODE_COLOR[state.mode];
   }
   $('modes').addEventListener('click', (e) => {
     const m = e.target.dataset.mode; if (!m) return;
@@ -534,7 +609,7 @@
   function currentPct() {
     const b = state.battery;
     const rides = state.rides.filter((r) => r.at >= b.setAt);
-    const usedWh = rides.reduce((s, r) => s + r.km * (b.use[r.mode] || b.use.Tour), 0);
+    const usedWh = rides.reduce((s, r) => s + r.km * (b.use[r.mode] ?? b.use.Tour), 0);
     return { pct: Math.max(0, b.pct - (usedWh / b.cap) * 100), rides };
   }
   function renderAccu() {
@@ -545,13 +620,13 @@
       ? `Geschat: ${b.pct}% op ${dateStr(b.setAt)}, min ${rides.length} rit(ten) sindsdien. Schuif om te corrigeren naar wat je fiets aangeeft.`
       : 'Schuif naar het percentage dat je fiets aangeeft.';
     const wh = (pct / 100) * b.cap;
-    $('range').innerHTML = MODES.map((m) => `<div class="stat"><b>${nf(wh / b.use[m], 0)} km</b><span>${m}</span></div>`).join('');
+    $('range').innerHTML = ASSIST.map((m) => `<div class="stat"><b>${nf(wh / b.use[m], 0)} km</b><span>${m}</span></div>`).join('');
     $('charge-list').innerHTML = state.charges.length ? state.charges.slice(0, 8).map((c, i) => {
       const next = i === 0 ? state.odo : state.charges[i - 1].odo;
       return `<li><div class="grow"><div class="title">${dateStr(c.at)}</div><div class="sub">${nf(next - c.odo, 0)} km ${i === 0 ? 'sinds deze lading' : 'op deze lading'}</div></div></li>`;
     }).join('') : '<li class="empty">Nog niet geladen via de app</li>';
     $('cap').value = b.cap;
-    $('use-inputs').innerHTML = MODES.map((m) => `<label for="use-${m}">${m} (Wh/km)</label><input id="use-${m}" data-use="${m}" type="number" inputmode="decimal" step="0.5" min="1" value="${b.use[m]}">`).join('');
+    $('use-inputs').innerHTML = ASSIST.map((m) => `<label for="use-${m}">${m} (Wh/km)</label><input id="use-${m}" data-use="${m}" type="number" inputmode="decimal" step="0.5" min="1" value="${b.use[m]}">`).join('');
   }
   $('bat').addEventListener('input', (e) => {
     Object.assign(state.battery, { pct: Number(e.target.value), setAt: Date.now(), setOdo: state.odo });
