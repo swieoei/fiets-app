@@ -26,11 +26,10 @@
   }
   /* Thema volgt de ondersteuningsstand, in de kleuren van het led-display op de fiets */
   body { --on-accent: #fff; --accent-ink: var(--accent); }
-  body[data-mode="Uit"]   { --accent: light-dark(#d4d8d7, #f5f5f5); --on-accent: #111; --accent-ink: var(--text); --accent-soft: light-dark(#eceeed, #2a2f2e); }
-  body[data-mode="Eco"]   { --accent: light-dark(#16a34a, #22c55e); --on-accent: light-dark(#fff, #052e16); --accent-ink: light-dark(#15803d, #4ade80); --accent-soft: light-dark(#dcfce7, #14351f); }
-  body[data-mode="Tour"]  { --accent: light-dark(#2563eb, #3b82f6); --on-accent: #fff; --accent-ink: light-dark(#1d4ed8, #60a5fa); --accent-soft: light-dark(#dbeafe, #172a4d); }
-  body[data-mode="Sport"] { --accent: light-dark(#ea580c, #fb923c); --on-accent: light-dark(#fff, #2a1205); --accent-ink: light-dark(#c2410c, #fb923c); --accent-soft: light-dark(#ffedd5, #3d2210); }
-  body[data-mode="Turbo"] { --accent: light-dark(#9333ea, #a855f7); --on-accent: #fff; --accent-ink: light-dark(#7e22ce, #c084fc); --accent-soft: light-dark(#f3e8ff, #2e1748); }
+  body[data-mode="Uit"]    { --accent: light-dark(#d4d8d7, #f5f5f5); --on-accent: #111; --accent-ink: var(--text); --accent-soft: light-dark(#eceeed, #2a2f2e); }
+  body[data-mode="Breeze"] { --accent: light-dark(#16a34a, #22c55e); --on-accent: light-dark(#fff, #052e16); --accent-ink: light-dark(#15803d, #4ade80); --accent-soft: light-dark(#dcfce7, #14351f); }
+  body[data-mode="River"]  { --accent: light-dark(#2563eb, #3b82f6); --on-accent: #fff; --accent-ink: light-dark(#1d4ed8, #60a5fa); --accent-soft: light-dark(#dbeafe, #172a4d); }
+  body[data-mode="Rocket"] { --accent: light-dark(#c026d3, #d946ef); --on-accent: #fff; --accent-ink: light-dark(#a21caf, #e879f9); --accent-soft: light-dark(#fae8ff, #3b1240); }
   header { border-bottom: 4px solid var(--accent); margin-bottom: 14px; transition: border-color .3s; }
   .big { color: var(--accent-ink); transition: color .3s; }
   .bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin-top: 6px; }
@@ -101,8 +100,8 @@
   button.danger { color: var(--bad); }
   button.small { min-height: 36px; padding: 6px 12px; font-size: 14px; flex: 0 0 auto; }
   button:disabled { opacity: .45; cursor: default; }
-  .modes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-  .modes button { padding: 10px 2px; font-size: 13px; }
+  .modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .modes button { padding: 10px 2px; font-size: 14px; }
   .modes button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .status { font-size: 14px; color: var(--muted); text-align: center; margin-top: 10px; min-height: 1.4em; }
   label { display: block; font-size: 14px; color: var(--muted); margin: 10px 0 4px; }
@@ -168,7 +167,7 @@
         <path class="pas-line" d="M14 50 H92 C118 50 116 10 150 10 C184 10 182 50 208 50 H286"/>
         <circle cx="150" cy="44" r="24" class="pas-ring"/>
         <text x="150" y="58" id="pas-num">2</text>
-        <text x="150" y="88" class="lbl" id="pas-name">TOUR</text>
+        <text x="150" y="88" class="lbl" id="pas-name">RIVER</text>
       </svg>
       <div class="disp-trip"><span>RIT</span><b id="dist">0,00</b><small>km</small></div>
       <div class="status" id="gps-status">Druk op Start om je rit te beginnen</div>
@@ -326,18 +325,19 @@
 <script>
 (() => {
   'use strict';
-  const MODES = ['Uit', 'Eco', 'Tour', 'Sport', 'Turbo'];
+  const MODES = ['Uit', 'Breeze', 'River', 'Rocket'];
   const ASSIST = MODES.slice(1); // standen die accu verbruiken
-  const MODE_COLOR = { Uit: '#e5e7eb', Eco: '#22c55e', Tour: '#3b82f6', Sport: '#fb923c', Turbo: '#a855f7' };
+  const MODE_COLOR = { Uit: '#e5e7eb', Breeze: '#22c55e', River: '#3b82f6', Rocket: '#d946ef' };
+  const OLD_MODE = { Eco: 'Breeze', Tour: 'River', Sport: 'Rocket', Turbo: 'Rocket' };
   const KEY = 'fiets-app-v1';
   const DAY = 86400000;
 
   const defaults = () => ({
     odo: 0,
-    mode: 'Tour',
+    mode: 'River',
     rides: [],
     charges: [],
-    battery: { pct: 100, setAt: Date.now(), setOdo: 0, cap: 500, use: { Uit: 0, Eco: 6, Tour: 9, Sport: 12, Turbo: 16 } },
+    battery: { pct: 100, setAt: Date.now(), setOdo: 0, cap: 500, use: { Uit: 0, Breeze: 6, River: 10, Rocket: 15 } },
     maint: [
       { id: 1, name: 'Ketting schoonmaken en smeren', km: 300, days: null, lastKm: 0, lastAt: Date.now() },
       { id: 2, name: 'Bandenspanning controleren', km: null, days: 14, lastKm: 0, lastAt: Date.now() },
@@ -349,7 +349,10 @@
   let state;
   try { state = Object.assign(defaults(), JSON.parse(localStorage.getItem(KEY)) || {}); }
   catch { state = defaults(); }
-  state.battery.use.Uit ??= 0;
+  // oudere standnamen omzetten naar Breeze/River/Rocket
+  if (OLD_MODE[state.mode]) state.mode = OLD_MODE[state.mode];
+  state.rides.forEach((r) => { if (OLD_MODE[r.mode]) r.mode = OLD_MODE[r.mode]; });
+  state.battery.use = Object.assign(defaults().battery.use, Object.fromEntries(Object.entries(state.battery.use).filter(([k]) => MODES.includes(k))));
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 
   const $ = (id) => document.getElementById(id);
@@ -680,7 +683,7 @@
   function currentPct() {
     const b = state.battery;
     const rides = state.rides.filter((r) => r.at >= b.setAt);
-    const usedWh = rides.reduce((s, r) => s + r.km * (b.use[r.mode] ?? b.use.Tour), 0);
+    const usedWh = rides.reduce((s, r) => s + r.km * (b.use[r.mode] ?? b.use.River), 0);
     return { pct: Math.max(0, b.pct - (usedWh / b.cap) * 100), rides };
   }
   function renderAccu() {
