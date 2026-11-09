@@ -76,7 +76,7 @@
   .mode-name { position: absolute; right: 16px; bottom: 10px; font-size: 12px; letter-spacing: 2px; color: var(--mode); opacity: .75; font-weight: 700; font-style: normal; }
   .ring-track { fill: #05080a; stroke: #1b2024; stroke-width: 6; }
   .ring-level { fill: none; stroke: var(--bat); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 100 100; filter: drop-shadow(0 0 4px var(--bat)); transition: stroke-dasharray .6s, stroke .3s; }
-  #bat-num { font-size: 22px; font-style: italic; font-variant-numeric: tabular-nums; }
+  #bat-num { font-size: 36px; letter-spacing: -1px; font-style: italic; font-variant-numeric: tabular-nums; }
   #bat-num .pct-sign { font-size: 13px; fill: #8a959b; }
   .disp-trip { display: flex; justify-content: space-around; text-align: center; line-height: 1.05; }
   .disp-trip span { display: block; color: #22d3ee; font-weight: 800; font-size: 13px; letter-spacing: 1px; margin-bottom: 2px; }
@@ -201,8 +201,8 @@
           <path class="pas-line" d="M-1 64 C30 64 26 8 70 8 C114 8 110 64 141 64"/>
           <circle cx="70" cy="60" r="36" class="ring-track"/>
           <circle cx="70" cy="60" r="36" class="ring-level" id="bat-ring" pathLength="100" transform="rotate(-90 70 60)"/>
-          <text x="70" y="69" id="bat-num">0<tspan class="pct-sign" id="bat-unit">km</tspan></text>
-          <text x="70" y="112" class="side-l bat-l">BEREIK</text>
+          <text x="70" y="73" id="bat-num">0</text>
+          <text x="70" y="112" class="side-l bat-l">KM BEREIK</text>
         </svg>
         <i class="pas-flat"><b class="mode-name" id="pas-name">RIVER</b></i>
       </div>
@@ -471,8 +471,7 @@
     // cirkel: resterend bereik in km voor de huidige stand; de ring zelf toont het accupercentage
     const pct = Math.round(currentPct().pct), b = state.battery, use = b.use[state.mode];
     const km = use > 0 ? Math.round(((pct / 100) * b.cap) / use) : null;
-    $('bat-num').firstChild.nodeValue = km == null ? '∞' : km;
-    $('bat-unit').textContent = km == null ? '' : 'km';
+    $('bat-num').textContent = km == null ? '∞' : Math.min(km, 99); // max. 2 cijfers
     $('pas').setAttribute('aria-label', `Bereik ${km == null ? 'onbeperkt' : km + ' km'} in ${state.mode}, accu ${pct}%. Tik om van stand te wisselen`);
     $('display').style.setProperty('--bat', pct > 40 ? '#4ade80' : pct > 15 ? '#fbbf24' : '#f87171');
     $('bat-ring').style.strokeDasharray = `${Math.max(pct, 0.5)} 100`;
