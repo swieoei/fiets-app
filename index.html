@@ -38,6 +38,32 @@
   .bars i { display: block; width: 100%; background: var(--accent); border-radius: 6px 6px 2px 2px; min-height: 2px; margin: 4px 0; }
   .share { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--bg); margin: 6px 0 10px; }
   .share i { display: block; height: 100%; }
+  /* Rit-scherm in de stijl van een kleurendisplay op het stuur: altijd zwart */
+  .display {
+    --mode: #3b82f6; background: radial-gradient(120% 80% at 50% 0%, #0c1114, #020304 70%);
+    color: #fff; border: 7px solid #17191b; border-radius: 24px; padding: 10px 12px 14px; margin-bottom: 14px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.25), inset 0 0 24px #000;
+  }
+  .disp-top { display: flex; justify-content: center; align-items: center; gap: 14px; height: 24px; }
+  #disp-bt { color: #2f363b; transition: color .3s; }
+  #disp-bt.on { color: #22d3ee; filter: drop-shadow(0 0 4px #22d3ee); }
+  .gauge, .pas { width: 100%; display: block; }
+  .gauge .outer { fill: none; stroke: #22d3ee; stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 4px #22d3ee); }
+  .gauge .seg { fill: #1b2024; transition: fill .2s; }
+  .gauge .seg.on { fill: #f59e0b; }
+  .display text { fill: #fff; text-anchor: middle; font-weight: 800; font-family: system-ui, sans-serif; }
+  .display .lbl { font-size: 17px; letter-spacing: .5px; }
+  #speed { font-size: 76px; font-style: italic; letter-spacing: -3px; font-variant-numeric: tabular-nums; }
+  .display .unit-t { font-size: 13px; font-style: italic; }
+  .pas { cursor: pointer; margin-top: -6px; }
+  .pas-line { fill: none; stroke: var(--mode); stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 5px var(--mode)); transition: stroke .3s; }
+  .pas-ring { fill: #05080a; stroke: #22d3ee; stroke-width: 4; }
+  #pas-num { font-size: 36px; fill: var(--mode); font-style: italic; transition: fill .3s; }
+  .disp-trip { text-align: center; margin-top: 4px; line-height: 1.05; }
+  .disp-trip span { display: block; color: #22d3ee; font-weight: 800; font-size: 17px; }
+  .disp-trip b { font-size: 52px; font-style: italic; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+  .disp-trip small { margin-left: 4px; color: #8a959b; font-weight: 700; }
+  .display .status { color: #8a959b; }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
   .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c); margin-right: 6px; border: 1px solid var(--line); }
   * { box-sizing: border-box; }
@@ -126,16 +152,34 @@
 <main>
   <!-- RIT -->
   <section id="tab-rit">
+    <div class="display" id="display">
+      <div class="disp-top">
+        <span id="disp-bat" aria-label="Accu"></span>
+        <svg id="disp-bt" viewBox="0 0 32 18" width="30" height="17" aria-label="Bluetooth-verbinding"><g fill="none" stroke="currentColor" stroke-width="3"><rect x="2" y="3" width="16" height="12" rx="6"/><rect x="14" y="3" width="16" height="12" rx="6"/></g></svg>
+      </div>
+      <svg class="gauge" viewBox="0 0 300 190" aria-hidden="false">
+        <path class="outer" id="outer"/>
+        <g id="segs"></g>
+        <text x="150" y="74" class="lbl">SPEED</text>
+        <text x="150" y="138" id="speed">0,0</text>
+        <text x="222" y="170" class="unit-t">KM/U</text>
+      </svg>
+      <svg class="pas" id="pas" viewBox="0 0 300 92" role="button" tabindex="0" aria-label="Volgende ondersteuningsstand">
+        <path class="pas-line" d="M14 50 H92 C118 50 116 10 150 10 C184 10 182 50 208 50 H286"/>
+        <circle cx="150" cy="44" r="24" class="pas-ring"/>
+        <text x="150" y="58" id="pas-num">2</text>
+        <text x="150" y="88" class="lbl" id="pas-name">TOUR</text>
+      </svg>
+      <div class="disp-trip"><span>RIT</span><b id="dist">0,00</b><small>km</small></div>
+      <div class="status" id="gps-status">Druk op Start om je rit te beginnen</div>
+    </div>
     <div class="card">
-      <div class="big" id="speed">0,0</div>
-      <div class="unit">km/u</div>
-      <div class="stats">
-        <div class="stat"><b id="dist">0,00</b><span>km</span></div>
+      <div class="stats" style="margin-top:0">
         <div class="stat"><b id="time">0:00:00</b><span>rijtijd</span></div>
         <div class="stat"><b id="avg">0,0</b><span>gem. km/u</span></div>
         <div class="stat"><b id="max">0,0</b><span>max. km/u</span></div>
+        <div class="stat"><b id="disp-pct">100%</b><span>accu (geschat)</span></div>
       </div>
-      <div class="status" id="gps-status">Druk op Start om je rit te beginnen</div>
     </div>
     <div class="card">
       <h2>Fiets (Bluetooth)</h2>
@@ -362,6 +406,9 @@
     document.body.dataset.mode = state.mode;
     const meta = document.querySelector('meta[name=theme-color]');
     meta.content = MODE_COLOR[state.mode];
+    $('display').style.setProperty('--mode', state.mode === 'Uit' ? '#f5f5f5' : MODE_COLOR[state.mode]);
+    $('pas-num').textContent = MODES.indexOf(state.mode);
+    $('pas-name').textContent = state.mode.toUpperCase();
   }
   $('modes').addEventListener('click', (e) => {
     const m = e.target.dataset.mode; if (!m) return;
@@ -388,7 +435,30 @@
     $('time').textContent = fmtTime(ride.moving);
     $('avg').textContent = nf(ride.moving > 0 ? (ride.dist / 1000) / (ride.moving / 3600000) : 0);
     $('max').textContent = nf(ride.max);
+    setGauge(speed);
   }
+
+  /* ---------- Display: snelheidsboog, PAS, accu en BT-icoon ---------- */
+  const SEGS = 20, VMAX = 45;
+  const arcPt = (r, a) => { const t = (a * Math.PI) / 180; return [150 + r * Math.cos(t), 140 - r * Math.sin(t)].map((n) => n.toFixed(1)).join(' '); };
+  const sector = (r1, r2, a0, a1) => `M${arcPt(r2, a0)}A${r2} ${r2} 0 0 1 ${arcPt(r2, a1)}L${arcPt(r1, a1)}A${r1} ${r1} 0 0 0 ${arcPt(r1, a0)}Z`;
+  $('segs').innerHTML = Array.from({ length: SEGS }, (_, i) => { const a0 = 199 - i * 11; return `<path class="seg" d="${sector(100, 121, a0, a0 - 9)}"/>`; }).join('');
+  $('outer').setAttribute('d', `M${arcPt(133, 200)}A133 133 0 1 1 ${arcPt(133, -20)}`);
+  function setGauge(v) {
+    const n = Math.round((Math.min(v || 0, VMAX) / VMAX) * SEGS);
+    document.querySelectorAll('#segs .seg').forEach((s, i) => s.classList.toggle('on', i < n));
+  }
+  function renderDisplayTop() {
+    const pct = currentPct().pct, bars = Math.ceil(pct / 20);
+    const col = pct > 40 ? '#4ade80' : pct > 15 ? '#fbbf24' : '#f87171';
+    $('disp-bat').innerHTML = `<svg viewBox="0 0 64 22" width="64" height="22"><path d="M5 2H2v18h3M59 2h3v18h-3" fill="none" stroke="${col}" stroke-width="3"/>` +
+      Array.from({ length: 5 }, (_, i) => `<rect x="${9 + i * 10}" y="5" width="6" height="12" rx="1" fill="${i < bars ? col : '#1b2024'}"/>`).join('') + '</svg>';
+    $('disp-pct').textContent = Math.round(pct) + '%';
+    $('disp-bt').classList.toggle('on', !!(typeof bike !== 'undefined' && bike.connected));
+  }
+  function nextMode() { state.mode = MODES[(MODES.indexOf(state.mode) + 1) % MODES.length]; save(); renderModes(); }
+  $('pas').addEventListener('click', nextMode);
+  $('pas').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nextMode(); } });
   function onPos(p) {
     const c = p.coords, now = p.timestamp;
     if (c.accuracy > 35) { $('gps-status').textContent = `Wachten op beter GPS-signaal (±${Math.round(c.accuracy)} m)`; return; }
@@ -461,12 +531,13 @@
   function btUI(name, status) {
     $('bt-name').textContent = name; $('bt-status').textContent = status;
     $('btn-bt').textContent = bike.device ? (bike.connected ? 'Ontkoppel' : 'Verbind') : 'Koppel fiets';
+    renderDisplayTop();
   }
   async function readBattery(server) {
     try {
       const svc = await server.getPrimaryService('battery_service');
       const ch = await svc.getCharacteristic('battery_level');
-      const set = (v) => { Object.assign(state.battery, { pct: v, setAt: Date.now(), setOdo: state.odo }); save(); };
+      const set = (v) => { Object.assign(state.battery, { pct: v, setAt: Date.now(), setOdo: state.odo }); save(); renderDisplayTop(); };
       set((await ch.readValue()).getUint8(0));
       try { await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', (e) => set(e.target.value.getUint8(0))); } catch {}
       return true;
@@ -626,6 +697,7 @@
       return `<li><div class="grow"><div class="title">${dateStr(c.at)}</div><div class="sub">${nf(next - c.odo, 0)} km ${i === 0 ? 'sinds deze lading' : 'op deze lading'}</div></div></li>`;
     }).join('') : '<li class="empty">Nog niet geladen via de app</li>';
     $('cap').value = b.cap;
+    renderDisplayTop();
     $('use-inputs').innerHTML = ASSIST.map((m) => `<label for="use-${m}">${m} (Wh/km)</label><input id="use-${m}" data-use="${m}" type="number" inputmode="decimal" step="0.5" min="1" value="${b.use[m]}">`).join('');
   }
   $('bat').addEventListener('input', (e) => {
@@ -667,6 +739,7 @@
   /* ---------- Start ---------- */
   renderOdo(); renderModes(); renderRide(); setButtons();
   $('r-date').value = new Date().toISOString().slice(0, 10);
+  renderDisplayTop();
   showTab('rit'); // standaard altijd de stats in beeld
   autoReconnect();
 
