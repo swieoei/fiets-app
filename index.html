@@ -301,7 +301,7 @@
         <summary>Accu-instellingen</summary>
         <label for="cap">Capaciteit (Wh)</label>
         <input id="cap" type="number" inputmode="numeric" min="100" step="25">
-        <p class="hint">Staat op de accu zelf, bijvoorbeeld 400, 500, 625 of 750 Wh.</p>
+        <p class="hint">Staat op de accu zelf. Gazelle Cayo C310 (Fazua): 430 Wh.</p>
         <div id="use-inputs"></div>
         <p class="hint">Verbruik in Wh per km. Pas aan als je bereik in de praktijk anders uitvalt.</p>
       </details>
@@ -351,7 +351,7 @@
     mode: 'River',
     rides: [],
     charges: [],
-    battery: { pct: 100, setAt: Date.now(), setOdo: 0, cap: 500, use: { Uit: 0, Breeze: 6, River: 10, Rocket: 15 } },
+    battery: { pct: 100, setAt: Date.now(), setOdo: 0, cap: 430, use: { Uit: 0, Breeze: 5.5, River: 7, Rocket: 9.5 } }, // Gazelle Cayo C310 (Fazua Ride 60): 430 Wh, opgave 80/60/45 km
     maint: [
       { id: 1, name: 'Ketting schoonmaken en smeren', km: 300, days: null, lastKm: 0, lastAt: Date.now() },
       { id: 2, name: 'Bandenspanning controleren', km: null, days: 14, lastKm: 0, lastAt: Date.now() },
