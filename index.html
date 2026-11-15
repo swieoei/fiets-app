@@ -668,10 +668,18 @@
     if (!btSupported) { toast('Bluetooth werkt alleen in Chrome op Android; starten kan met Start'); return; }
     if (bike.connected) { clearTimeout(bike.retry); bike.device.gatt.disconnect(); bike.device = null; bike.connected = false; btUI(state.bike?.name || 'Fiets', 'Koppel fiets'); return; }
     if (bike.device) { connectBike(bike.device); return; }
+    // Bekende fiets: alleen die in de lijst tonen. Geannuleerd? Dan toont de volgende tik alle apparaten.
+    const services = ['battery_service', 'cycling_speed_and_cadence'];
+    const known = !!(state.bike?.name && state.bike.name !== 'Fiets') && !bike.showAll;
     try {
-      const dev = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: ['battery_service', 'cycling_speed_and_cadence'] });
+      const dev = await navigator.bluetooth.requestDevice(known
+        ? { filters: [{ name: state.bike.name }], optionalServices: services }
+        : { acceptAllDevices: true, optionalServices: services });
+      bike.showAll = false;
       connectBike(dev);
-    } catch { /* gebruiker annuleerde */ }
+    } catch {
+      if (known) { bike.showAll = true; toast('Fiets niet gekozen. Tik nog eens om alle apparaten te zien'); }
+    }
   });
   // bij openen van de app: eerder gekoppelde fiets automatisch opnieuw verbinden
   async function autoReconnect() {
