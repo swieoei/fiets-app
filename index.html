@@ -163,9 +163,55 @@
     opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px);
   }
   .toast.show { opacity: 1; }
+  /* ---------- Weergave: Neon (zonsondergang, palmbomen, neon) ---------- */
+  @font-face { font-family: "Kanit"; font-style: italic; font-weight: 600; font-display: swap; src: url("fonts/kanit-600-italic.woff2") format("woff2"); }
+  @font-face { font-family: "Kanit"; font-style: italic; font-weight: 800; font-display: swap; src: url("fonts/kanit-800-italic.woff2") format("woff2"); }
+  .skins { grid-template-columns: repeat(2, 1fr); }
+  body.skin-neon { --neon-bg: #13051f; }
+  body.skin-neon.rit, body.skin-neon.rit nav, body.skin-neon .disp-ctrl { background: var(--neon-bg); }
+  body.skin-neon.rit nav { border-top-color: #3a1250; }
+  body.skin-neon.rit nav button { color: #b98ab0; }
+  body.skin-neon.rit nav button[aria-current="page"] { color: var(--mode-c); }
+  body.skin-neon .display {
+    position: relative; isolation: isolate; overflow: hidden;
+    background: url("skins/neon-palms.svg") bottom center / 100% auto no-repeat,
+      linear-gradient(180deg, #13051f 0%, #24093d 38%, #4a0f55 62%, #7a1a5c 80%, #a02a5a 100%);
+  }
+  body.skin-neon .display::after {
+    content: ""; position: absolute; z-index: -1; left: -60%; right: -60%; bottom: 0; height: 34%;
+    background: repeating-linear-gradient(90deg, rgba(255, 60, 172, .45) 0 2px, transparent 2px 46px), repeating-linear-gradient(180deg, rgba(255, 60, 172, .45) 0 2px, transparent 2px 30px);
+    transform: perspective(260px) rotateX(62deg); transform-origin: bottom; opacity: .55;
+    -webkit-mask: linear-gradient(transparent, #000 70%); mask: linear-gradient(transparent, #000 70%);
+  }
+  body.skin-neon .pas { position: relative; }
+  body.skin-neon .pas::before {
+    content: ""; position: absolute; z-index: -1; left: 50%; bottom: calc(var(--ph) - var(--ph) * 64 / 114);
+    width: min(58vw, 300px); aspect-ratio: 2 / 1; transform: translateX(-50%); border-radius: 999px 999px 0 0;
+    background: linear-gradient(180deg, #ffe45c 0%, #ff9f3d 45%, #ff3c8e 100%); opacity: .8;
+    -webkit-mask: linear-gradient(#000 0 40%, transparent 40% 46%, #000 46% 58%, transparent 58% 65%, #000 65% 75%, transparent 75% 83%, #000 83% 90%, transparent 90%);
+            mask: linear-gradient(#000 0 40%, transparent 40% 46%, #000 46% 58%, transparent 58% 65%, #000 65% 75%, transparent 75% 83%, #000 83% 90%, transparent 90%);
+  }
+  body.skin-neon .pas-line { fill: #1b0730; filter: drop-shadow(0 0 8px var(--mode)); }
+  body.skin-neon .pas-flat { box-shadow: 0 0 12px var(--mode), 0 0 24px var(--mode); }
+  body.skin-neon .mode-name { opacity: 1; right: 12px; bottom: 9px; padding: 2px 8px; border-radius: 6px; background: rgba(19, 5, 31, .82); text-shadow: 0 0 8px var(--mode); }
+  body.skin-neon .display text, body.skin-neon .disp-trip, body.skin-neon .bt-btn, body.skin-neon .disp-odo, body.skin-neon .mode-name { font-family: "Kanit", system-ui, sans-serif; }
+  body.skin-neon #speed { font-size: 84px; font-weight: 800; letter-spacing: -2px; fill: #fff; filter: drop-shadow(0 0 6px #ff3cac) drop-shadow(0 0 14px rgba(255, 60, 172, .6)); }
+  body.skin-neon .display .lbl { fill: #ffd8f0; font-weight: 600; letter-spacing: 2px; }
+  body.skin-neon .display .unit-t { fill: #c9a3c0; }
+  body.skin-neon .gauge .seg { fill: rgba(255, 255, 255, .09); }
+  body.skin-neon .gauge .seg.on { fill: var(--mode); filter: drop-shadow(0 0 6px var(--mode)); }
+  body.skin-neon .gauge .outer-track { stroke: rgba(255, 255, 255, .12); }
+  body.skin-neon .gauge .outer { stroke-width: 6; filter: drop-shadow(0 0 6px var(--bat)) drop-shadow(0 0 12px var(--bat)); }
+  body.skin-neon #bat-num { font-weight: 800; filter: drop-shadow(0 0 6px var(--bat)); }
+  body.skin-neon .display .side-v { font-weight: 800; }
+  body.skin-neon .disp-trip b { font-weight: 800; text-shadow: 0 0 10px rgba(255, 60, 172, .7); }
+  body.skin-neon .disp-trip span { text-shadow: 0 0 8px var(--mode); }
+  body.skin-neon .bt-btn { background: rgba(19, 5, 31, .55); border-color: rgba(255, 255, 255, .18); color: #ffd8f0; }
+  body.skin-neon .disp-odo, body.skin-neon .display .status { color: #f3b6dc; }
 </style>
 </head>
 <body class="rit">
+<script>try { if ((JSON.parse(localStorage.getItem('fiets-app-v1')) || {}).skin === 'neon') document.body.classList.add('skin-neon'); } catch (e) {}</script>
 <header>
   <h1 id="title">Rit</h1>
   <div class="odo" id="odo">0 km</div>
@@ -307,6 +353,14 @@
       </details>
     </div>
     <div class="card">
+      <h2>Weergave</h2>
+      <div class="modes skins" id="skins">
+        <button type="button" data-skin="display" aria-pressed="true">Display</button>
+        <button type="button" data-skin="neon" aria-pressed="false">Neon</button>
+      </div>
+      <p class="hint">Hoe het ritscherm eruitziet. Neon: zonsondergang met palmbomen.</p>
+    </div>
+    <div class="card">
       <details>
         <summary>Back-up</summary>
         <p class="hint">Je gegevens staan alleen op dit apparaat. Maak af en toe een back-up.</p>
@@ -342,6 +396,8 @@
   const MODES = ['Uit', 'Breeze', 'River', 'Rocket'];
   const ASSIST = MODES.slice(1); // standen die accu verbruiken
   const MODE_COLOR = { Uit: '#e5e7eb', Breeze: '#22c55e', River: '#3b82f6', Rocket: '#d946ef' };
+  const SKIN_MODE = { neon: { Uit: '#fff4e6', Breeze: '#2dfcb4', River: '#22e5ff', Rocket: '#ff3cac' } };
+  const modeColor = (m) => (SKIN_MODE[state.skin] || {})[m] || (m === 'Uit' ? '#f5f5f5' : MODE_COLOR[m]);
   const OLD_MODE = { Eco: 'Breeze', Tour: 'River', Sport: 'Rocket', Turbo: 'Rocket' };
   const KEY = 'fiets-app-v1';
   const DAY = 86400000;
@@ -349,6 +405,7 @@
   const defaults = () => ({
     odo: 0,
     mode: 'River',
+    skin: 'display',
     rides: [],
     charges: [],
     battery: { pct: 100, setAt: Date.now(), setOdo: 0, cap: 430, use: { Uit: 0, Breeze: 5.5, River: 7, Rocket: 9.5 } }, // Gazelle Cayo C310 (Fazua Ride 60): 430 Wh, opgave 80/60/45 km
@@ -412,8 +469,8 @@
     const maxW = Math.max(1, ...weeks.map((w) => w.km));
     $('week-bars').innerHTML = weeks.map((w) => `<div title="${nf(w.km, 1)} km">${w.km ? nf(w.km, 0) : ''}<i style="height:${(w.km / maxW) * 80}%"></i>${new Date(w.s).toLocaleDateString('nl-NL', { day: 'numeric', month: 'numeric' })}</div>`).join('');
     const per = MODES.map((md) => ({ md, km: R.filter((r) => r.mode === md).reduce((a, r) => a + r.km, 0) })).filter((x) => x.km > 0);
-    $('mode-share').innerHTML = per.map((x) => `<i style="width:${(x.km / km) * 100}%;background:${MODE_COLOR[x.md]}"></i>`).join('');
-    $('mode-legend').innerHTML = per.length ? per.map((x) => `<span style="--c:${MODE_COLOR[x.md]}">${x.md} ${nf(x.km, 0)} km (${Math.round((x.km / km) * 100)}%)</span>`).join('') : '<span class="empty">Nog geen ritten</span>';
+    $('mode-share').innerHTML = per.map((x) => `<i style="width:${(x.km / km) * 100}%;background:${modeColor(x.md)}"></i>`).join('');
+    $('mode-legend').innerHTML = per.length ? per.map((x) => `<span style="--c:${modeColor(x.md)}">${x.md} ${nf(x.km, 0)} km (${Math.round((x.km / km) * 100)}%)</span>`).join('') : '<span class="empty">Nog geen ritten</span>';
   }
   document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
@@ -422,7 +479,7 @@
   /* ---------- Ondersteuningsstand ---------- */
   function renderModes() {
     document.body.dataset.mode = state.mode;
-    const mc = state.mode === 'Uit' ? '#f5f5f5' : MODE_COLOR[state.mode];
+    const mc = modeColor(state.mode);
     $('display').style.setProperty('--mode', mc);
     document.body.style.setProperty('--mode-c', mc);
     $('pas-name').textContent = state.mode.toUpperCase();
@@ -768,13 +825,28 @@
       if (!Array.isArray(data.rides) || !data.battery) throw new Error();
       if (!confirm('Huidige gegevens vervangen door de back-up?')) return;
       state = Object.assign(defaults(), data); save();
-      renderOdo(); renderModes(); renderAccu(); toast('Back-up teruggezet');
+      renderOdo(); applySkin(); renderAccu(); toast('Back-up teruggezet');
     } catch { toast('Dit is geen geldig back-upbestand'); }
     e.target.value = '';
   });
 
+  /* ---------- Weergave ---------- */
+  function applySkin() {
+    const neon = state.skin === 'neon';
+    document.body.classList.toggle('skin-neon', neon);
+    document.querySelector('meta[name=theme-color]').content = neon ? '#13051f' : '#020304';
+    document.querySelectorAll('#skins button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.skin === (neon ? 'neon' : 'display'))));
+    renderModes();
+  }
+  $('skins').addEventListener('click', (e) => {
+    const skin = e.target.closest('button')?.dataset.skin;
+    if (!skin) return;
+    state.skin = skin; save(); applySkin();
+    toast(skin === 'neon' ? 'Weergave: Neon' : 'Weergave: Display');
+  });
+
   /* ---------- Start ---------- */
-  renderOdo(); renderModes(); renderRide(); setButtons();
+  renderOdo(); renderModes(); renderRide(); setButtons(); applySkin();
   $('r-date').value = new Date().toISOString().slice(0, 10);
   renderDisplayTop();
   try { history.scrollRestoration = 'manual'; } catch {}

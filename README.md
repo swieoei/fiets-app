@@ -10,3 +10,4 @@ Eigen fiets-app als PWA: GPS-fietscomputer, ritten- en onderhoudslog en accu-pla
 - Gegevens staan alleen lokaal op het apparaat (back-up via export/import).
 
 Bij een update: verhoog de cachenaam in `sw.js` (`fiets-app-v1` → `v2`).
+- Weergave kiezen in het tabblad Accu: Display (zwart kleurendisplay) of Neon (zonsondergang met palmbomen). Lettertype Kanit, SIL Open Font License 1.1 (zie `fonts/OFL.txt`).

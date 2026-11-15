@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" preserveAspectRatio="xMidYMax meet">
+  <g fill="#14041d" stroke="#14041d"><g transform="translate(-34 92) scale(0.66)">
+    <path d="M30 262 C40 210 52 165 78 118" fill="none" stroke-width="9" stroke-linecap="round"/>
+    <path d="M78 118 C108 92 142 92 172 112 C142 106 110 108 78 118 Z" stroke-width="5"/>
+    <path d="M78 118 C98 84 126 68 158 66 C128 78 102 94 78 118 Z" stroke-width="5"/>
+    <path d="M78 118 C80 84 92 60 114 42 C98 68 88 92 78 118 Z" stroke-width="5"/>
+    <path d="M78 118 C66 86 50 70 24 62 C48 78 64 96 78 118 Z" stroke-width="5"/>
+    <path d="M78 118 C52 102 28 104 2 122 C30 110 54 110 78 118 Z" stroke-width="5"/>
+    <path d="M78 118 C102 120 122 134 134 158 C116 140 98 130 78 118 Z" stroke-width="5"/>
+    <path d="M78 118 C58 126 42 142 36 164 C48 144 62 132 78 118 Z" stroke-width="5"/>
+    </g>
+    <g transform="translate(432 118) scale(-0.56 0.6)">
+      <path d="M30 262 C40 210 52 165 78 118" fill="none" stroke-width="10" stroke-linecap="round"/>
+      <path d="M78 118 C108 92 142 92 172 112 C142 106 110 108 78 118 Z" stroke-width="5"/>
+      <path d="M78 118 C98 84 126 68 158 66 C128 78 102 94 78 118 Z" stroke-width="5"/>
+      <path d="M78 118 C80 84 92 60 114 42 C98 68 88 92 78 118 Z" stroke-width="5"/>
+      <path d="M78 118 C66 86 50 70 24 62 C48 78 64 96 78 118 Z" stroke-width="5"/>
+      <path d="M78 118 C52 102 28 104 2 122 C30 110 54 110 78 118 Z" stroke-width="5"/>
+      <path d="M78 118 C102 120 122 134 134 158 C116 140 98 130 78 118 Z" stroke-width="5"/>
+    </g>
+  </g>
+</svg>
