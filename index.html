@@ -45,7 +45,8 @@
   body.rit nav button { color: #6b767c; }
   body.rit nav button[aria-current="page"] { color: var(--mode-c, #22d3ee); }
   /* display vult precies het scherm boven de nav; de knoppen staan net onder de vouw */
-  .display { height: calc(100dvh - 64px - env(safe-area-inset-bottom)); }
+  /* --app-h = echte schermhoogte, door de app zelf gemeten (100dvh telt op Android soms de systeembalk mee) */
+  .display { height: calc(var(--app-h, 100dvh) - var(--nav-h, calc(64px + env(safe-area-inset-bottom)))); }
   .display {
     --mode: #3b82f6; --bat: #4ade80; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 4px;
     background: radial-gradient(120% 70% at 50% 0%, #0c1216, #020304 70%); color: #fff;
@@ -215,7 +216,7 @@
   @media (max-height: 600px) {
     body.rit { padding-bottom: 0; }
     body.rit nav { display: none; }
-    .display { height: 100dvh; padding: 6px 14px 4px; gap: 0; justify-content: center; }
+    .display { height: var(--app-h, 100dvh); padding: 6px 14px 4px; gap: 0; justify-content: center; }
     .disp-top, .disp-trip, .display .status { display: none; }
     .gauge { flex: 1 1 0; max-height: none; aspect-ratio: auto; }
     .pas { --ph: min(100px, 30dvh); }
@@ -248,7 +249,7 @@
   body.skin-lock .display { display: none; }
   body.skin-lock .lock { display: flex; }
   body.skin-lock.rit { background: #2b1d52; }
-  .lock { position: relative; isolation: isolate; height: 100dvh; flex-direction: column; color: #fff; overflow: hidden;
+  .lock { position: relative; isolation: isolate; height: var(--app-h, 100dvh); flex-direction: column; color: #fff; overflow: hidden;
     padding: calc(14px + env(safe-area-inset-top)) 0 calc(78px + env(safe-area-inset-bottom)); }
   .lock-bg { position: absolute; inset: 0; z-index: -1; background: #c43aa5 center / cover no-repeat; }
   .lock-bg.std { filter: blur(1.6px); transform: scale(1.04); }
@@ -300,6 +301,7 @@
 </style>
 </head>
 <body class="rit">
+<script>(function () { const h = () => document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px'); h(); addEventListener('resize', h); })();</script>
 <script>try { const s = (JSON.parse(localStorage.getItem('fiets-app-v1')) || {}).skin; if (s === 'neon' || s === 'lock') document.body.classList.add('skin-' + s); } catch (e) {}</script>
 <header>
   <h1 id="title">Rit</h1>
@@ -1086,6 +1088,9 @@
   });
 
   /* ---------- Start ---------- */
+  // hoogte van de menubalk meten, zodat het ritscherm er precies boven past
+  const setNavH = () => document.documentElement.style.setProperty('--nav-h', document.querySelector('nav').offsetHeight + 'px');
+  setNavH(); addEventListener('resize', setNavH);
   renderOdo(); renderModes(); renderRide(); setButtons(); applySkin(); applyLockBg();
   $('r-date').value = new Date().toISOString().slice(0, 10);
   renderDisplayTop();
