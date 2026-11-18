@@ -51,14 +51,16 @@
     background: radial-gradient(120% 70% at 50% 0%, #0c1216, #020304 70%); color: #fff;
     padding: calc(10px + env(safe-area-inset-top)) 16px 12px;
   }
-  .disp-top { display: flex; justify-content: space-between; align-items: center; }
+  .disp-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .disp-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .disp-left .bt-btn { white-space: nowrap; }
   .bt-btn {
     display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px 4px 8px;
     border-radius: 999px; border: 1px solid #222a2f; background: #0a0e10; color: #6b767c; font-size: 13px; font-weight: 600;
   }
   .bt-btn.on { color: #22d3ee; border-color: #155e6b; }
   .bt-btn.on svg { filter: drop-shadow(0 0 4px #22d3ee); }
-  .disp-odo { color: #6b767c; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .disp-odo { color: #6b767c; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .gauge { flex: 0 1 auto; min-height: 0; width: 100%; max-width: 560px; max-height: 46dvh; aspect-ratio: 300 / 232; margin: 0 auto; }
   .gauge .outer-track { fill: none; stroke: #1b2024; stroke-width: 5; stroke-linecap: round; }
   .gauge .outer { fill: none; stroke: var(--bat); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 100 100; filter: drop-shadow(0 0 4px var(--bat)); transition: stroke .3s, stroke-dasharray .6s; }
@@ -208,6 +210,17 @@
   body.skin-neon .disp-trip span { text-shadow: 0 0 8px var(--mode); }
   body.skin-neon .bt-btn { background: rgba(19, 5, 31, .55); border-color: rgba(255, 255, 255, .18); color: #ffd8f0; }
   body.skin-neon .disp-odo, body.skin-neon .display .status { color: #f3b6dc; }
+  /* ---------- Gedeeld scherm (bijv. met Google Maps): compacte indeling ----------
+     Alleen wat onderweg telt: snelheid (actueel, gem, max), bereik in km en de stand.
+     Zelfde vormgeving als het grote scherm, zonder menubalk, knoppen en ritgegevens. */
+  @media (max-height: 600px) {
+    body.rit { padding-bottom: 0; }
+    body.rit nav { display: none; }
+    .display { height: 100dvh; padding: 6px 14px 4px; gap: 0; justify-content: center; }
+    .disp-top, .disp-trip, .display .status { display: none; }
+    .gauge { flex: 1 1 0; max-height: none; aspect-ratio: auto; }
+    .pas { --ph: min(100px, 30dvh); }
+  }
 </style>
 </head>
 <body class="rit">
@@ -222,10 +235,16 @@
   <section id="tab-rit">
     <div class="display" id="display">
       <div class="disp-top">
-        <button class="bt-btn" id="btn-bt" aria-label="Fiets koppelen via Bluetooth">
-          <svg id="disp-bt" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>
-          <span id="bt-label">Koppel fiets</span>
-        </button>
+        <div class="disp-left">
+          <button class="bt-btn" id="btn-bt" aria-label="Fiets koppelen via Bluetooth">
+            <svg id="disp-bt" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>
+            <span id="bt-label">Koppel fiets</span>
+          </button>
+          <button class="bt-btn nav-btn" id="btn-nav" aria-label="Navigeer met Google Maps naast de fiets-app">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 3l7 18-7-4-7 4z"/></svg>
+            <span>Navigeer</span>
+          </button>
+        </div>
         <span class="disp-odo" id="disp-odo">0 km</span>
       </div>
       <svg class="gauge" viewBox="0 0 300 232">
@@ -549,8 +568,11 @@
       if (dt > 0) {
         const calc = (d / dt) * 3600;
         if (speed == null) speed = calc;
-        // negeer ruis bij stilstand en onrealistische sprongen
-        if (d > Math.max(3, c.accuracy * 0.5) && calc < 80) {
+        // negeer ruis bij stilstand en onrealistische sprongen: de GPS meldt zelf stilstand,
+        // of de verplaatsing valt binnen de onnauwkeurigheid van de meting
+        // zonder GPS-snelheid (bijv. binnen, locatie via wifi) tellen alleen zeer nauwkeurige punten mee
+        const beweegt = c.speed != null ? c.speed >= 1 : c.accuracy <= 12;
+        if (beweegt && d > Math.max(5, c.accuracy) && calc < 80) {
           ride.dist += d;
           ride.byMode[state.mode] = (ride.byMode[state.mode] || 0) + d / 1000;
           if (calc > 2) { ride.moving += Math.min(dt, 30000); ride.lastMove = now; }
@@ -862,6 +884,15 @@
       renderOdo(); applySkin(); renderAccu(); toast('Back-up teruggezet');
     } catch { toast('Dit is geen geldig back-upbestand'); }
     e.target.value = '';
+  });
+
+  /* ---------- Navigeren met Google Maps ----------
+     Opent Google Maps in de fietsroute-stand naast de app (gedeeld scherm, Android).
+     launchFlags = FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT. Bestemming kies je in Maps. */
+  $('btn-nav').addEventListener('click', () => {
+    const web = 'https://www.google.com/maps/dir/?api=1&travelmode=bicycling';
+    if (!/Android/i.test(navigator.userAgent)) { window.open(web, '_blank', 'noopener'); return; }
+    location.href = 'intent://www.google.com/maps/dir/?api=1&travelmode=bicycling#Intent;scheme=https;package=com.google.android.apps.maps;launchFlags=0x10001000;S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
   });
 
   /* ---------- Weergave ---------- */
