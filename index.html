@@ -241,10 +241,68 @@
     -webkit-mask: linear-gradient(#000 0 40%, transparent 40% 46%, #000 46% 58%, transparent 58% 65%, #000 65% 75%, transparent 75% 83%, #000 83% 90%, transparent 90%);
             mask: linear-gradient(#000 0 40%, transparent 40% 46%, #000 46% 58%, transparent 58% 65%, #000 65% 75%, transparent 75% 83%, #000 83% 90%, transparent 90%); }
   @media (max-height: 600px) { body.skin-neon .display::before { bottom: 0; width: min(46vw, 220px); opacity: .4; } .gauge { max-height: none; } }
+  /* ---------- Weergave: Lockscreen ----------
+     Grote smalle cijfers, stand als label bovenin, vier glazen ringen (bereik, gem, max, rit),
+     glazen knoppen. Achtergrond: eigen foto (alleen op dit toestel) of de standaard roze palmen. */
+  @font-face { font-family: "Antonio"; font-weight: 700; font-display: swap; src: url("fonts/antonio-700.woff2") format("woff2"); }
+  .skins { grid-template-columns: repeat(3, 1fr); }
+  .lock { display: none; }
+  body.skin-lock .display { display: none; }
+  body.skin-lock .lock { display: flex; }
+  body.skin-lock.rit { background: #2b1d52; }
+  .lock { position: relative; isolation: isolate; height: 100dvh; flex-direction: column; color: #fff; overflow: hidden;
+    padding: calc(14px + env(safe-area-inset-top)) 0 calc(78px + env(safe-area-inset-bottom)); }
+  .lock-bg { position: absolute; inset: 0; z-index: -1; background: #c43aa5 center / cover no-repeat; }
+  .lock-bg.std { filter: blur(1.6px); transform: scale(1.04); }
+  .lock::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(180deg, rgba(30, 10, 50, .2), transparent 28%, transparent 60%, rgba(30, 10, 50, .32)); }
+  .glass { background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .38); color: #fff;
+    -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 6px 18px rgba(30, 0, 50, .22); }
+  .lock-stand { align-self: center; display: inline-flex; align-items: center; gap: 8px; padding: 5px 16px; border-radius: 999px;
+    font-size: 22px; font-weight: 600; cursor: pointer; text-shadow: 0 1px 6px rgba(40, 0, 60, .4); }
+  .lock-stand::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--mode-c); box-shadow: 0 0 8px var(--mode-c); }
+  .lock-speed { text-align: center; white-space: nowrap; line-height: .82; margin-top: 8px; font-family: "Antonio", sans-serif; font-weight: 700; }
+  .lock-speed span { background: linear-gradient(180deg, #4a63e0 0%, #8a55d6 35%, #e45aa8 62%, #f7a35c 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    -webkit-text-stroke: 3px rgba(60, 10, 80, .55); filter: drop-shadow(0 6px 14px rgba(40, 0, 60, .35)); }
+  #lock-int { font-size: min(44vh, 82vw); letter-spacing: -6px; }
+  #lock-dec { font-size: min(17vh, 32vw); letter-spacing: -2px; }
+  .lock-unit { text-align: center; margin-top: 4px; font-size: 15px; font-weight: 600; letter-spacing: 3px; text-shadow: 0 1px 6px rgba(40, 0, 60, .5); }
+  .lock-rings { margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 14px; }
+  .lring { position: relative; aspect-ratio: 1; width: 100%; max-width: 86px; margin: 0 auto; border-radius: 50%; }
+  .lring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+  .lring .trk { fill: none; stroke: rgba(255, 255, 255, .28); stroke-width: 6; }
+  .lring .val { fill: none; stroke-width: 6; stroke-linecap: round; stroke-dasharray: 0 100; transition: stroke-dasharray .6s; }
+  .lring .in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-shadow: 0 1px 6px rgba(40, 0, 60, .45); }
+  .lring b { font-size: 24px; font-weight: 600; line-height: 1; letter-spacing: -.5px; font-variant-numeric: tabular-nums; }
+  .lring small { font-size: 11px; font-weight: 600; letter-spacing: .5px; margin-top: 3px; }
+  .lock-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 22px 0; }
+  .lock-btn { width: 62px; height: 62px; flex: 0 0 62px; border-radius: 50%; display: grid; place-items: center; padding: 0; min-height: 0; }
+  .lock-btn svg { width: 26px; height: 26px; }
+  .lock-btn.on { border-color: var(--mode-c); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 0 18px var(--mode-c); }
+  .lock-status { min-width: 0; flex: 1; text-align: center; font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 999px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 6px rgba(40, 0, 60, .45); }
+  body.skin-lock.rit nav { background: rgba(255, 255, 255, .12); border-top-color: rgba(255, 255, 255, .25);
+    -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%); }
+  body.skin-lock.rit nav button { color: rgba(255, 255, 255, .78); }
+  body.skin-lock.rit nav button[aria-current="page"] { color: #fff; }
+  .bg-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  .bg-thumb { width: 44px; height: 72px; border-radius: 8px; background: #c43aa5 center / cover no-repeat; border: 1px solid var(--line); flex: 0 0 auto; }
+  @media (max-height: 600px) {
+    .lock { padding: 6px 0 10px; }
+    .lock-bottom, .lock-unit { display: none; }
+    .lock-stand { font-size: 16px; padding: 2px 12px; }
+    #lock-int { font-size: min(46vh, 80vw); }
+    #lock-dec { font-size: 18vh; }
+    .lring { max-width: 68px; }
+    .lring b { font-size: 18px; }
+    .lring small { font-size: 10px; }
+  }
 </style>
 </head>
 <body class="rit">
-<script>try { if ((JSON.parse(localStorage.getItem('fiets-app-v1')) || {}).skin === 'neon') document.body.classList.add('skin-neon'); } catch (e) {}</script>
+<script>try { const s = (JSON.parse(localStorage.getItem('fiets-app-v1')) || {}).skin; if (s === 'neon' || s === 'lock') document.body.classList.add('skin-' + s); } catch (e) {}</script>
 <header>
   <h1 id="title">Rit</h1>
   <div class="odo" id="odo">0 km</div>
@@ -253,6 +311,23 @@
 <main>
   <!-- RIT -->
   <section id="tab-rit">
+    <div class="lock" id="lock">
+      <div class="lock-bg std" id="lock-bg"></div>
+      <div class="lock-stand glass" id="lock-stand" role="button" tabindex="0" aria-label="Ondersteuningsstand">River</div>
+      <div class="lock-speed" aria-label="Snelheid"><span id="lock-int">0</span><span id="lock-dec">,0</span></div>
+      <div class="lock-unit">KM/U</div>
+      <div class="lock-rings">
+        <div class="lring glass"><svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="34"/><circle class="val" id="lr-bat" cx="40" cy="40" r="34" pathLength="100" style="stroke: var(--bat)"/></svg><div class="in"><b id="lr-bat-v">0</b><small>km bereik</small></div></div>
+        <div class="lring glass"><svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="34"/><circle class="val" id="lr-avg" cx="40" cy="40" r="34" pathLength="100" style="stroke: rgba(255, 255, 255, .95)"/></svg><div class="in"><b id="lr-avg-v">0</b><small>gem</small></div></div>
+        <div class="lring glass"><svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="34"/><circle class="val" id="lr-max" cx="40" cy="40" r="34" pathLength="100" style="stroke: rgba(255, 255, 255, .95)"/></svg><div class="in"><b id="lr-max-v">0</b><small>max</small></div></div>
+        <div class="lring glass"><svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="34"/><circle class="val" id="lr-dist" cx="40" cy="40" r="34" pathLength="100" style="stroke: var(--mode-c)"/></svg><div class="in"><b id="lr-dist-v">0</b><small>km rit</small></div></div>
+      </div>
+      <div class="lock-bottom">
+        <button class="glass lock-btn" id="lock-bt" aria-label="Fiets koppelen via Bluetooth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg></button>
+        <div class="lock-status glass" id="lock-status">0:00:00</div>
+        <button class="glass lock-btn" id="lock-nav" aria-label="Navigeer met Google Maps naast de fiets-app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 3l7 18-7-4-7 4z"/></svg></button>
+      </div>
+    </div>
     <div class="display" id="display">
       <div class="disp-top">
         <div class="disp-left">
@@ -398,8 +473,17 @@
       <div class="modes skins" id="skins">
         <button type="button" data-skin="display" aria-pressed="true">Display</button>
         <button type="button" data-skin="neon" aria-pressed="false">Neon</button>
+        <button type="button" data-skin="lock" aria-pressed="false">Lockscreen</button>
       </div>
-      <p class="hint">Hoe het ritscherm eruitziet. Neon: zonsondergang met palmbomen.</p>
+      <p class="hint">Hoe het ritscherm eruitziet. Neon: zonsondergang met palmbomen. Lockscreen: grote cijfers en glazen ringen op een achtergrond naar keuze.</p>
+      <div class="bg-row">
+        <div class="bg-thumb" id="bg-thumb" aria-hidden="true"></div>
+        <div style="flex: 1">
+          <div class="row"><button type="button" class="small" id="bg-pick">Kies foto</button><button type="button" class="small" id="bg-reset">Standaard</button></div>
+          <p class="hint" style="margin-top: 6px">Achtergrond voor Lockscreen. Je foto blijft alleen op dit toestel.</p>
+        </div>
+      </div>
+      <input type="file" id="bg-file" accept="image/*" hidden>
     </div>
     <div class="card">
       <details>
@@ -526,6 +610,7 @@
     document.body.style.setProperty('--mode-c', mc);
     $('pas-name').textContent = state.mode.toUpperCase();
     $('gauge-mode').textContent = state.mode.toUpperCase();
+    $('lock-stand').textContent = state.mode;
     renderDisplayTop();
   }
 
@@ -550,7 +635,23 @@
     $('avg').textContent = nf(ride.moving > 0 ? (ride.dist / 1000) / (ride.moving / 3600000) : 0);
     $('max').textContent = nf(ride.max);
     setGauge(speed);
+    const sp = nf(speed), ci = sp.indexOf(',');
+    $('lock-int').textContent = ci < 0 ? sp : sp.slice(0, ci);
+    $('lock-dec').textContent = ci < 0 ? '' : sp.slice(ci);
+    const avg = ride.moving > 0 ? (ride.dist / 1000) / (ride.moving / 3600000) : 0;
+    $('lr-avg-v').textContent = nf(avg); ringTo('lr-avg', avg / VMAX);
+    $('lr-max-v').textContent = nf(ride.max); ringTo('lr-max', ride.max / VMAX);
+    lockRit(); syncLockStatus();
   }
+  // ringen: deel van de cirkel (0..1); rit-ring = gereden deel van rit + resterend bereik
+  const ringTo = (id, f) => { $(id).style.strokeDasharray = `${Math.max(0, Math.min(1, f || 0)) * 100} 100`; };
+  let lockRange = null;
+  function lockRit() {
+    const km = ride.dist / 1000;
+    $('lr-dist-v').textContent = nf(km, 1);
+    ringTo('lr-dist', lockRange == null ? 0 : km / (km + lockRange || 1));
+  }
+  function syncLockStatus() { $('lock-status').textContent = `${$('time').textContent} · ${$('gps-status').textContent}`; }
 
   /* ---------- Display: snelheidsboog, PAS, accu en BT-icoon ---------- */
   const SEGS = 20, VMAX = 45;
@@ -569,10 +670,15 @@
     const km = use > 0 ? Math.round(((pct / 100) * b.cap) / use) : null;
     $('bat-num').textContent = km == null ? '∞' : Math.min(km, 99); // max. 2 cijfers
     $('pas').setAttribute('aria-label', `Bereik ${km == null ? 'onbeperkt' : km + ' km'} in ${state.mode}, accu ${pct}%. Tik om van stand te wisselen`);
-    $('display').style.setProperty('--bat', pct > 40 ? '#4ade80' : pct > 15 ? '#fbbf24' : '#f87171');
+    const batColor = pct > 40 ? '#4ade80' : pct > 15 ? '#fbbf24' : '#f87171';
+    $('display').style.setProperty('--bat', batColor);
+    $('lock').style.setProperty('--bat', batColor);
+    $('lr-bat-v').textContent = km == null ? '∞' : Math.min(km, 999); ringTo('lr-bat', pct / 100);
+    lockRange = km; lockRit();
     $('outer').style.strokeDasharray = `${Math.max(pct, 0.5)} 100`; // grote boog = accu
     const on = !!(typeof bike !== 'undefined' && bike.connected);
     $('btn-bt').classList.toggle('on', on);
+    $('lock-bt').classList.toggle('on', on);
   }
 
   function nextMode() {
@@ -581,6 +687,8 @@
   }
   $('pas').addEventListener('click', nextMode);
   $('gauge-mode').addEventListener('click', nextMode);
+  $('lock-stand').addEventListener('click', nextMode);
+  $('lock-stand').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nextMode(); } });
   $('pas').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nextMode(); } });
   function onPos(p) {
     const c = p.coords, now = p.timestamp;
@@ -921,21 +1029,66 @@
 
   /* ---------- Weergave ---------- */
   function applySkin() {
-    const neon = state.skin === 'neon';
-    document.body.classList.toggle('skin-neon', neon);
-    document.querySelector('meta[name=theme-color]').content = neon ? '#13051f' : '#020304';
-    document.querySelectorAll('#skins button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.skin === (neon ? 'neon' : 'display'))));
+    const skin = ['neon', 'lock'].includes(state.skin) ? state.skin : 'display';
+    document.body.classList.toggle('skin-neon', skin === 'neon');
+    document.body.classList.toggle('skin-lock', skin === 'lock');
+    document.querySelector('meta[name=theme-color]').content = { neon: '#13051f', lock: '#2b1d52', display: '#020304' }[skin];
+    document.querySelectorAll('#skins button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.skin === skin)));
     renderModes();
   }
   $('skins').addEventListener('click', (e) => {
-    const skin = e.target.closest('button')?.dataset.skin;
-    if (!skin) return;
-    state.skin = skin; save(); applySkin();
-    toast(skin === 'neon' ? 'Weergave: Neon' : 'Weergave: Display');
+    const btn = e.target.closest('button');
+    if (!btn?.dataset.skin) return;
+    state.skin = btn.dataset.skin; save(); applySkin();
+    toast('Weergave: ' + btn.textContent);
+  });
+  $('lock-bt').addEventListener('click', () => $('btn-bt').click());
+  $('lock-nav').addEventListener('click', () => $('btn-nav').click());
+  new MutationObserver(syncLockStatus).observe($('gps-status'), { childList: true, characterData: true, subtree: true });
+
+  /* ---------- Eigen achtergrond: alleen op dit toestel (IndexedDB), nooit online ---------- */
+  const idb = (mode, fn) => new Promise((res, rej) => {
+    const open = indexedDB.open('fiets-app', 1);
+    open.onupgradeneeded = () => open.result.createObjectStore('files');
+    open.onerror = () => rej(open.error);
+    open.onsuccess = () => { const tx = open.result.transaction('files', mode); const q = fn(tx.objectStore('files')); tx.oncomplete = () => res(q && q.result); tx.onerror = () => rej(tx.error); };
+  });
+  let bgUrl = null;
+  async function applyLockBg() {
+    const blob = await idb('readonly', (st) => st.get('lock-bg')).catch(() => null);
+    if (bgUrl) { URL.revokeObjectURL(bgUrl); bgUrl = null; }
+    const el = $('lock-bg');
+    if (blob) { bgUrl = URL.createObjectURL(blob); el.style.backgroundImage = `url("${bgUrl}")`; el.classList.remove('std'); }
+    else { el.style.backgroundImage = 'url("skins/lock-palms.svg")'; el.classList.add('std'); }
+    $('bg-thumb').style.backgroundImage = el.style.backgroundImage;
+  }
+  async function shrink(file) {
+    // verkleinen tot max. 2000 px en als JPEG bewaren: scheelt opslag en geheugen
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('leeg'))), 'image/jpeg', 0.86));
+  }
+  $('bg-pick').addEventListener('click', () => $('bg-file').click());
+  $('bg-file').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try {
+      const small = await shrink(f);
+      await idb('readwrite', (st) => st.put(small, 'lock-bg'));
+      state.skin = 'lock'; save(); applySkin(); await applyLockBg();
+      toast('Achtergrond ingesteld');
+    } catch { toast('Deze afbeelding kon niet worden gebruikt'); }
+  });
+  $('bg-reset').addEventListener('click', async () => {
+    await idb('readwrite', (st) => st.delete('lock-bg')).catch(() => {});
+    await applyLockBg(); toast('Standaardachtergrond');
   });
 
   /* ---------- Start ---------- */
-  renderOdo(); renderModes(); renderRide(); setButtons(); applySkin();
+  renderOdo(); renderModes(); renderRide(); setButtons(); applySkin(); applyLockBg();
   $('r-date').value = new Date().toISOString().slice(0, 10);
   renderDisplayTop();
   try { history.scrollRestoration = 'manual'; } catch {}
