@@ -230,10 +230,11 @@
   .gauge { max-height: 60dvh; }
   .display { justify-content: flex-start; }
   .disp-top { margin-bottom: 4%; }
-  .gauge { margin-top: auto; }
+  .gauge { margin: auto -10px 0; width: calc(100% + 20px); max-width: none; }
   .disp-odo { display: none; } /* totaal staat in het tabblad Totaal; houdt de bovenbalk vrij */
-  .disp-trip { margin-top: 5%; }
-  .display .status { margin-top: auto; }
+  .disp-trip { margin: 6% 0 auto; }
+  .disp-trip b { font-size: clamp(32px, 7dvh, 56px); }
+
   @media (max-height: 600px) { .display { justify-content: center; } }
   body.skin-neon .display::before { content: ""; position: absolute; z-index: -1; left: 50%; bottom: 6%; width: min(62vw, 320px); aspect-ratio: 2 / 1; transform: translateX(-50%); border-radius: 999px 999px 0 0;
     background: linear-gradient(180deg, #ffe45c 0%, #ff9f3d 45%, #ff3c8e 100%); opacity: .5;
