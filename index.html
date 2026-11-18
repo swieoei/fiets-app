@@ -176,8 +176,7 @@
   body.skin-neon.rit nav button[aria-current="page"] { color: var(--mode-c); }
   body.skin-neon .display {
     position: relative; isolation: isolate; overflow: hidden;
-    background: url("skins/neon-palms.svg") bottom center / 100% auto no-repeat,
-      linear-gradient(180deg, #13051f 0%, #24093d 38%, #4a0f55 62%, #7a1a5c 80%, #a02a5a 100%);
+    background: linear-gradient(180deg, #13051f 0%, #24093d 38%, #4a0f55 62%, #7a1a5c 80%, #a02a5a 100%);
   }
   body.skin-neon .display::after {
     content: ""; position: absolute; z-index: -1; left: -60%; right: -60%; bottom: 0; height: 34%;
@@ -236,11 +235,10 @@
   .disp-trip b { font-size: clamp(32px, 7dvh, 56px); }
 
   @media (max-height: 600px) { .display { justify-content: center; } }
-  body.skin-neon .display::before { content: ""; position: absolute; z-index: -1; left: 50%; bottom: 6%; width: min(62vw, 320px); aspect-ratio: 2 / 1; transform: translateX(-50%); border-radius: 999px 999px 0 0;
-    background: linear-gradient(180deg, #ffe45c 0%, #ff9f3d 45%, #ff3c8e 100%); opacity: .5;
-    -webkit-mask: linear-gradient(#000 0 40%, transparent 40% 46%, #000 46% 58%, transparent 58% 65%, #000 65% 75%, transparent 75% 83%, #000 83% 90%, transparent 90%);
             mask: linear-gradient(#000 0 40%, transparent 40% 46%, #000 46% 58%, transparent 58% 65%, #000 65% 75%, transparent 75% 83%, #000 83% 90%, transparent 90%); }
-  @media (max-height: 600px) { body.skin-neon .display::before { bottom: 0; width: min(46vw, 220px); opacity: .4; } .gauge { max-height: none; } }
+  @media (max-height: 600px) { .gauge { max-height: none; } }
+  /* Neon: rit en rijtijd onderaan (geen palmen of zon meer) */
+  body.skin-neon .disp-trip { margin: auto 0 4px; }
   /* ---------- Weergave: Lockscreen ----------
      Grote smalle cijfers, stand als label bovenin, vier glazen ringen (bereik, gem, max, rit),
      glazen knoppen. Achtergrond: eigen foto (alleen op dit toestel) of de standaard roze palmen. */
@@ -475,7 +473,7 @@
         <button type="button" data-skin="neon" aria-pressed="false">Neon</button>
         <button type="button" data-skin="lock" aria-pressed="false">Lockscreen</button>
       </div>
-      <p class="hint">Hoe het ritscherm eruitziet. Neon: zonsondergang met palmbomen. Lockscreen: grote cijfers en glazen ringen op een achtergrond naar keuze.</p>
+      <p class="hint">Hoe het ritscherm eruitziet. Neon: neonkleuren en een lichtgevende meter. Lockscreen: grote cijfers en glazen ringen op een achtergrond naar keuze.</p>
       <div class="bg-row">
         <div class="bg-thumb" id="bg-thumb" aria-hidden="true"></div>
         <div style="flex: 1">
