@@ -232,14 +232,12 @@
   .disp-top { margin-bottom: 4%; }
   .gauge { margin: auto -10px 0; width: calc(100% + 20px); max-width: none; }
   .disp-odo { display: none; } /* totaal staat in het tabblad Totaal; houdt de bovenbalk vrij */
-  .disp-trip { margin: 6% 0 auto; }
+  .disp-trip { margin: auto 0 4px; } /* rit en rijtijd onderaan, in Display en Neon */
   .disp-trip b { font-size: clamp(32px, 7dvh, 56px); }
 
   @media (max-height: 600px) { .display { justify-content: center; } }
             mask: linear-gradient(#000 0 40%, transparent 40% 46%, #000 46% 58%, transparent 58% 65%, #000 65% 75%, transparent 75% 83%, #000 83% 90%, transparent 90%); }
   @media (max-height: 600px) { .gauge { max-height: none; } }
-  /* Neon: rit en rijtijd onderaan (geen palmen of zon meer) */
-  body.skin-neon .disp-trip { margin: auto 0 4px; }
   /* ---------- Weergave: Lockscreen ----------
      Grote smalle cijfers, stand als label bovenin, vier glazen ringen (bereik, gem, max, rit),
      glazen knoppen. Achtergrond: eigen foto (alleen op dit toestel) of de standaard roze palmen. */
