@@ -221,6 +221,24 @@
     .gauge { flex: 1 1 0; max-height: none; aspect-ratio: auto; }
     .pas { --ph: min(100px, 30dvh); }
   }
+  /* Ontwerp B: geen horizonlijn; stand boven de snelheid, bereik tussen gem en max */
+  .pas { display: none !important; }
+  #gauge-mode { fill: var(--mode); letter-spacing: 4px; filter: drop-shadow(0 0 6px var(--mode)); cursor: pointer; }
+  .display .bat-v, .display .bat-l { fill: var(--bat); }
+  .display #bat-num { font-size: 24px; letter-spacing: 0; }
+  .display .bat-v { filter: drop-shadow(0 0 6px var(--bat)); }
+  .gauge { max-height: 60dvh; }
+  .display { justify-content: flex-start; }
+  .disp-top { margin-bottom: 4%; }
+  .gauge { margin-top: auto; }
+  .disp-trip { margin-top: 5%; }
+  .display .status { margin-top: auto; }
+  @media (max-height: 600px) { .display { justify-content: center; } }
+  body.skin-neon .display::before { content: ""; position: absolute; z-index: -1; left: 50%; bottom: 6%; width: min(62vw, 320px); aspect-ratio: 2 / 1; transform: translateX(-50%); border-radius: 999px 999px 0 0;
+    background: linear-gradient(180deg, #ffe45c 0%, #ff9f3d 45%, #ff3c8e 100%); opacity: .5;
+    -webkit-mask: linear-gradient(#000 0 40%, transparent 40% 46%, #000 46% 58%, transparent 58% 65%, #000 65% 75%, transparent 75% 83%, #000 83% 90%, transparent 90%);
+            mask: linear-gradient(#000 0 40%, transparent 40% 46%, #000 46% 58%, transparent 58% 65%, #000 65% 75%, transparent 75% 83%, #000 83% 90%, transparent 90%); }
+  @media (max-height: 600px) { body.skin-neon .display::before { bottom: 0; width: min(46vw, 220px); opacity: .4; } .gauge { max-height: none; } }
 </style>
 </head>
 <body class="rit">
@@ -251,19 +269,21 @@
         <path class="outer-track" id="outer-track"/>
         <path class="outer" id="outer" pathLength="100"/>
         <g id="segs"></g>
-        <text x="150" y="74" class="lbl">SPEED</text>
+        <text x="150" y="74" class="lbl" id="gauge-mode">RIVER</text>
         <text x="150" y="138" id="speed">0,0</text>
         <text x="150" y="166" class="unit-t">KM/U</text>
         <text x="42" y="212" class="side-v" id="avg">0,0</text>
         <text x="42" y="229" class="side-l">GEM</text>
         <text x="258" y="212" class="side-v" id="max">0,0</text>
         <text x="258" y="229" class="side-l">MAX</text>
+        <text x="150" y="212" class="side-v bat-v" id="bat-num">0</text>
+        <text x="150" y="229" class="side-l bat-l">KM BEREIK</text>
       </svg>
       <div class="pas" id="pas" role="button" tabindex="0" aria-label="Tik om van ondersteuningsstand te wisselen">
         <i class="pas-flat"></i>
         <svg class="pas-mid" viewBox="0 0 140 114">
           <path class="pas-line" d="M-1 64 C30 64 26 8 70 8 C114 8 110 64 141 64"/>
-          <text x="70" y="60" id="bat-num">0</text>
+          
           <text x="70" y="84" class="side-l bat-l">KM BEREIK</text>
         </svg>
         <i class="pas-flat"><b class="mode-name" id="pas-name">RIVER</b></i>
@@ -503,6 +523,7 @@
     $('display').style.setProperty('--mode', mc);
     document.body.style.setProperty('--mode-c', mc);
     $('pas-name').textContent = state.mode.toUpperCase();
+    $('gauge-mode').textContent = state.mode.toUpperCase();
     renderDisplayTop();
   }
 
@@ -557,6 +578,7 @@
     state.mode = MODES[(MODES.indexOf(state.mode) + 1) % MODES.length]; save(); renderModes();
   }
   $('pas').addEventListener('click', nextMode);
+  $('gauge-mode').addEventListener('click', nextMode);
   $('pas').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nextMode(); } });
   function onPos(p) {
     const c = p.coords, now = p.timestamp;
