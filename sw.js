@@ -1,4 +1,4 @@
-const CACHE = 'fiets-app-v19';
+const CACHE = 'fiets-app-v20';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-192.png', './icons/maskable-512.png', './fonts/kanit-600-italic.woff2', './fonts/kanit-800-italic.woff2', './skins/neon-palms.svg'];
 
 self.addEventListener('install', (e) => {

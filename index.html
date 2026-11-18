@@ -468,9 +468,10 @@
     for (let i = 7; i >= 0; i--) { const s = weekStart(Date.now()) - i * 7 * DAY; weeks.push({ s, km: R.filter((r) => r.at >= s && r.at < s + 7 * DAY).reduce((a, r) => a + r.km, 0) }); }
     const maxW = Math.max(1, ...weeks.map((w) => w.km));
     $('week-bars').innerHTML = weeks.map((w) => `<div title="${nf(w.km, 1)} km">${w.km ? nf(w.km, 0) : ''}<i style="height:${(w.km / maxW) * 80}%"></i>${new Date(w.s).toLocaleDateString('nl-NL', { day: 'numeric', month: 'numeric' })}</div>`).join('');
-    const per = MODES.map((md) => ({ md, km: R.filter((r) => r.mode === md).reduce((a, r) => a + r.km, 0) })).filter((x) => x.km > 0);
+    const kmIn = (r, md) => (r.modes ? r.modes[md] || 0 : r.mode === md ? r.km : 0);
+    const per = MODES.map((md) => ({ md, km: R.reduce((a, r) => a + kmIn(r, md), 0) })).filter((x) => x.km > 0);
     $('mode-share').innerHTML = per.map((x) => `<i style="width:${(x.km / km) * 100}%;background:${modeColor(x.md)}"></i>`).join('');
-    $('mode-legend').innerHTML = per.length ? per.map((x) => `<span style="--c:${modeColor(x.md)}">${x.md} ${nf(x.km, 0)} km (${Math.round((x.km / km) * 100)}%)</span>`).join('') : '<span class="empty">Nog geen ritten</span>';
+    $('mode-legend').innerHTML = per.length ? per.map((x) => `<span style="--c:${modeColor(x.md)}">${x.md} ${nf(x.km, x.km < 10 ? 1 : 0)} km (${Math.round((x.km / km) * 100)}%)</span>`).join('') : '<span class="empty">Nog geen ritten</span>';
   }
   document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
@@ -488,7 +489,7 @@
 
   /* ---------- Fietscomputer ---------- */
   const IDLE_STOP = 5 * 60000; // na 5 min stilstand stopt de rit vanzelf
-  const ride = { active: false, paused: false, watch: null, dist: 0, moving: 0, max: 0, last: null, started: 0, lastMove: 0, tick: null, lock: null };
+  const ride = { active: false, paused: false, watch: null, dist: 0, moving: 0, max: 0, last: null, started: 0, lastMove: 0, tick: null, lock: null, byMode: {} };
 
   function haversine(a, b) {
     const R = 6371000, r = Math.PI / 180;
@@ -532,7 +533,10 @@
     $('btn-bt').classList.toggle('on', on);
   }
 
-  function nextMode() { state.mode = MODES[(MODES.indexOf(state.mode) + 1) % MODES.length]; save(); renderModes(); }
+  function nextMode() {
+    if (bike.connected && bike.modeFromBike) { toast('De stand komt van je fiets: wissel met de knoppen op je stuur'); return; }
+    state.mode = MODES[(MODES.indexOf(state.mode) + 1) % MODES.length]; save(); renderModes();
+  }
   $('pas').addEventListener('click', nextMode);
   $('pas').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nextMode(); } });
   function onPos(p) {
@@ -548,6 +552,7 @@
         // negeer ruis bij stilstand en onrealistische sprongen
         if (d > Math.max(3, c.accuracy * 0.5) && calc < 80) {
           ride.dist += d;
+          ride.byMode[state.mode] = (ride.byMode[state.mode] || 0) + d / 1000;
           if (calc > 2) { ride.moving += Math.min(dt, 30000); ride.lastMove = now; }
           ride.max = Math.max(ride.max, Math.min(speed || 0, 80));
           ride.last = p;
@@ -586,7 +591,7 @@
     if (!('geolocation' in navigator)) { toast('Deze browser ondersteunt geen GPS'); return; }
     if (ride.active) return;
     showTab('rit');
-    Object.assign(ride, { active: true, paused: false, dist: 0, moving: 0, max: 0, last: null, started: Date.now(), lastMove: Date.now() });
+    Object.assign(ride, { active: true, paused: false, dist: 0, moving: 0, max: 0, last: null, started: Date.now(), lastMove: Date.now(), byMode: {} });
     ride.watch = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
     ride.tick = setInterval(() => {
       // automatisch stoppen na 5 minuten stilstand; stilstand telt niet mee in de rijtijd
@@ -603,7 +608,9 @@
     const km = ride.dist / 1000;
     if (km >= 0.05) {
       // eindtijd = laatste beweging, dus de 5 minuten stilstand vallen eraf
-      addRide({ at: ride.started, end: ride.lastMove, km, mins: ride.moving / 60000, max: ride.max, mode: state.mode });
+      const modes = Object.fromEntries(Object.entries(ride.byMode).map(([m, k]) => [m, Math.round(k * 1000) / 1000]));
+      const main = Object.keys(modes).sort((a, b) => modes[b] - modes[a])[0] || state.mode;
+      addRide({ at: ride.started, end: ride.lastMove, km, mins: ride.moving / 60000, max: ride.max, mode: main, modes });
       toast(reason === 'idle' ? `5 min stilgestaan: rit van ${nf(km, 2)} km opgeslagen` : `Rit opgeslagen: ${nf(km, 2)} km`);
     } else toast(reason === 'idle' ? '5 min stilgestaan: rit gestopt (te kort om op te slaan)' : 'Rit te kort, niet opgeslagen');
     Object.assign(ride, { active: false, paused: false, watch: null, last: null });
@@ -637,6 +644,22 @@
       return true;
     } catch { return false; }
   }
+  // Fazua (Gazelle Cayo): open dienst 0xFD6D; byte 0 van characteristic 7 = stand (0 Off, 1 Breeze, 2 River, 3 Rocket)
+  const FAZUA = { service: '0000fd6d-0000-1000-8000-00805f9b34fb', mode: '00000007-abab-4499-b9d7-d0efc0d06477' };
+  async function readMode(server) {
+    try {
+      const svc = await server.getPrimaryService(FAZUA.service);
+      const ch = await svc.getCharacteristic(FAZUA.mode);
+      const apply = (dv) => {
+        const m = MODES[dv.getUint8(0)];
+        if (m && m !== state.mode) { state.mode = m; save(); renderModes(); }
+      };
+      apply(await ch.readValue());
+      try { await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', (e) => apply(e.target.value)); } catch {}
+      bike.modeFromBike = true;
+      return true;
+    } catch { return false; }
+  }
   async function connectBike(dev) {
     bike.device = dev;
     if (!dev._fietsListener) { dev.addEventListener('gattserverdisconnected', onBikeDisconnect); dev._fietsListener = true; }
@@ -646,7 +669,8 @@
       bike.connected = true; clearTimeout(bike.retry);
       state.bike = { id: dev.id, name: dev.name || 'Fiets' }; save();
       const bat = await readBattery(server);
-      btUI(dev.name || 'Fiets', 'Verbonden' + (bat ? ' · accu wordt uitgelezen' : ''));
+      const mode = await readMode(server);
+      btUI(dev.name || 'Fiets', 'Verbonden' + (bat ? ' · accu' : '') + (mode ? ' · stand' : ''));
       startRide('bt');
     } catch {
       bike.connected = false;
@@ -655,7 +679,8 @@
     }
   }
   function onBikeDisconnect() {
-    bike.connected = false;
+    if (!bike.device) return; // zelf losgekoppeld
+    bike.connected = false; bike.modeFromBike = false;
     btUI(bike.device.name || 'Fiets', 'Verbinding kwijt, zoeken…');
     scheduleReconnect();
   }
@@ -666,14 +691,14 @@
   }
   $('btn-bt').addEventListener('click', async () => {
     if (!btSupported) { toast('Bluetooth werkt alleen in Chrome op Android; starten kan met Start'); return; }
-    if (bike.connected) { clearTimeout(bike.retry); bike.device.gatt.disconnect(); bike.device = null; bike.connected = false; btUI(state.bike?.name || 'Fiets', 'Koppel fiets'); return; }
+    if (bike.connected) { clearTimeout(bike.retry); const d = bike.device; bike.device = null; bike.connected = false; bike.modeFromBike = false; d.gatt.disconnect(); btUI(state.bike?.name || 'Fiets', 'Koppel fiets'); return; }
     if (bike.device) { connectBike(bike.device); return; }
     // Bekende fiets: alleen die in de lijst tonen. Geannuleerd? Dan toont de volgende tik alle apparaten.
-    const services = ['battery_service', 'cycling_speed_and_cadence'];
+    const services = ['battery_service', 'cycling_speed_and_cadence', 'cycling_power', FAZUA.service];
     const known = !!(state.bike?.name && state.bike.name !== 'Fiets') && !bike.showAll;
     try {
       const dev = await navigator.bluetooth.requestDevice(known
-        ? { filters: [{ name: state.bike.name }], optionalServices: services }
+        ? { filters: [{ name: state.bike.name, services: ['cycling_power'] }], optionalServices: services }
         : { acceptAllDevices: true, optionalServices: services });
       bike.showAll = false;
       connectBike(dev);
@@ -782,7 +807,8 @@
   function currentPct() {
     const b = state.battery;
     const rides = state.rides.filter((r) => r.at >= b.setAt);
-    const usedWh = rides.reduce((s, r) => s + r.km * (b.use[r.mode] ?? b.use.River), 0);
+    const wh = (m, k) => k * (b.use[m] ?? b.use.River);
+    const usedWh = rides.reduce((s, r) => s + (r.modes ? Object.entries(r.modes).reduce((a, [m, k]) => a + wh(m, k), 0) : wh(r.mode, r.km)), 0);
     return { pct: Math.max(0, b.pct - (usedWh / b.cap) * 100), rides };
   }
   function renderAccu() {
