@@ -276,6 +276,8 @@
   }
   .lock-speed span { animation: lockGlow 4s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) { .lock-speed span { animation: none; } }
+  /* Glazen cijfers: in de cijfers zie je de achtergrond, uitgelijnd en iets vergroot (lens), met glans en lichtrand */
+  .lock-speed span.glass-text { -webkit-text-stroke: 2px rgba(255, 255, 255, .72); background-repeat: no-repeat; }
   #lock-int { font-size: min(44vh, 82vw); letter-spacing: -6px; }
   #lock-dec { font-size: min(17vh, 32vw); letter-spacing: -2px; }
   .lock-unit { text-align: center; margin-top: 4px; font-size: 15px; font-weight: 600; letter-spacing: 3px; text-shadow: 0 1px 6px rgba(40, 0, 60, .5); }
@@ -665,7 +667,7 @@
     const avg = ride.moving > 0 ? (ride.dist / 1000) / (ride.moving / 3600000) : 0;
     $('lr-avg-v').textContent = nf(avg); ringTo('lr-avg', avg / VMAX);
     $('lr-max-v').textContent = nf(ride.max); ringTo('lr-max', ride.max / VMAX);
-    lockRit(); syncLockStatus();
+    lockRit(); syncLockStatus(); syncGlassText();
   }
   // ringen: deel van de cirkel (0..1); rit-ring = gereden deel van rit + resterend bereik
   const ringTo = (id, f) => { $(id).style.strokeDasharray = `${Math.max(0, Math.min(1, f || 0)) * 100} 100`; };
@@ -1075,7 +1077,7 @@
     document.body.classList.toggle('skin-lock', skin === 'lock');
     document.querySelector('meta[name=theme-color]').content = { neon: '#13051f', lock: '#2b1d52', display: '#020304' }[skin];
     document.querySelectorAll('#skins button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.skin === skin)));
-    renderModes();
+    renderModes(); syncGlassText();
   }
   $('skins').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
@@ -1102,7 +1104,31 @@
     if (blob) { bgUrl = URL.createObjectURL(blob); el.style.backgroundImage = `url("${bgUrl}")`; el.classList.remove('std'); }
     else { el.style.backgroundImage = 'url("skins/lock-palms.svg")'; el.classList.add('std'); }
     $('bg-thumb').style.backgroundImage = el.style.backgroundImage;
+    const src = blob ? bgUrl : 'skins/lock-palms.svg', im = new Image();
+    im.onload = () => { lockImg = { url: src, w: im.naturalWidth || 400, h: im.naturalHeight || 860 }; syncGlassText(); };
+    im.src = src;
   }
+  // Glazen snelheidscijfers: dezelfde achtergrond in de cijfers, precies uitgelijnd en 8% vergroot rond het midden
+  let lockImg = null;
+  const GLASS_ZOOM = 1.08;
+  function syncGlassText() {
+    if (!lockImg || !document.body.classList.contains('skin-lock')) return;
+    const br = $('lock-bg').getBoundingClientRect();
+    if (!br.width) return;
+    const k = Math.max(br.width / lockImg.w, br.height / lockImg.h), W = lockImg.w * k, H = lockImg.h * k;
+    const L = br.left + (br.width - W) / 2, T = br.top + (br.height - H) / 2;
+    for (const id of ['lock-int', 'lock-dec']) {
+      const sp = $(id), r = sp.getBoundingClientRect();
+      if (!r.width) continue;
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      sp.classList.add('glass-text');
+      sp.style.backgroundImage = `linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.12) 34%, rgba(255,255,255,0) 55%, rgba(255,255,255,.08)), url("${lockImg.url}")`;
+      sp.style.backgroundSize = `100% 100%, ${W * GLASS_ZOOM}px ${H * GLASS_ZOOM}px`;
+      sp.style.backgroundPosition = `0 0, ${cx - (cx - L) * GLASS_ZOOM - r.left}px ${cy - (cy - T) * GLASS_ZOOM - r.top}px`;
+    }
+  }
+  addEventListener('resize', () => syncGlassText());
+  document.fonts?.ready.then(() => syncGlassText());
   async function shrink(file) {
     // verkleinen tot max. 2000 px en als JPEG bewaren: scheelt opslag en geheugen
     const bmp = await createImageBitmap(file);
