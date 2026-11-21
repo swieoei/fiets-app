@@ -253,9 +253,15 @@
   .lock-bg.std { filter: blur(1.6px); transform: scale(1.04); }
   .lock::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
     background: linear-gradient(180deg, rgba(30, 10, 50, .2), transparent 28%, transparent 60%, rgba(30, 10, 50, .32)); }
-  .glass { background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .38); color: #fff;
-    -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 6px 18px rgba(30, 0, 50, .22); }
+  /* Helder glas met lensbreking: je kijkt erdoorheen, naar de randen buigt het beeld (SVG-filter #lg).
+     Browsers zonder SVG-filter in backdrop-filter vallen terug op licht mat glas. */
+  .glass { background: rgba(255, 255, 255, .05); border: 0; color: #fff;
+    -webkit-backdrop-filter: blur(4px) saturate(150%); backdrop-filter: blur(4px) saturate(150%);
+    backdrop-filter: url(#lg) saturate(150%) brightness(1.06);
+    box-shadow: inset 1.5px 1.5px 0 rgba(255, 255, 255, .6), inset -1px -1px 0 rgba(255, 255, 255, .2),
+      inset 0 0 16px rgba(255, 255, 255, .16), 0 10px 26px rgba(20, 0, 40, .3); }
+  .lock-stand.glass, .lock-status.glass { backdrop-filter: blur(4px) saturate(150%); backdrop-filter: url(#lg-s) saturate(150%) brightness(1.06); }
+  .lring .in, .lock-stand, .lock-status { text-shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 0 10px rgba(30, 0, 50, .55); }
   .lock-stand { align-self: center; display: inline-flex; align-items: center; gap: 8px; padding: 5px 16px; border-radius: 999px;
     font-size: 22px; font-weight: 600; cursor: pointer; text-shadow: 0 1px 6px rgba(40, 0, 60, .4); }
   .lock-stand::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--mode-c); box-shadow: 0 0 8px var(--mode-c); }
@@ -280,8 +286,11 @@
   .lock-btn.on { border-color: var(--mode-c); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 0 18px var(--mode-c); }
   .lock-status { min-width: 0; flex: 1; text-align: center; font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 999px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 6px rgba(40, 0, 60, .45); }
-  body.skin-lock.rit nav { background: rgba(255, 255, 255, .12); border-top-color: rgba(255, 255, 255, .25);
-    -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%); }
+  body.skin-lock.rit nav { background: rgba(255, 255, 255, .06); border-top-color: rgba(255, 255, 255, .45);
+    -webkit-backdrop-filter: blur(4px) saturate(150%); backdrop-filter: blur(4px) saturate(150%);
+    backdrop-filter: url(#lg-s) saturate(150%) brightness(1.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 -8px 24px rgba(20, 0, 40, .2); }
+  body.skin-lock.rit nav button { text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
   body.skin-lock.rit nav button { color: rgba(255, 255, 255, .78); }
   body.skin-lock.rit nav button[aria-current="page"] { color: #fff; }
   .bg-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
@@ -309,6 +318,16 @@
 <main>
   <!-- RIT -->
   <section id="tab-rit">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="lg" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feImage href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='x'%3E%3Cstop offset='0' stop-color='%23000'/%3E%3Cstop offset='1' stop-color='%23f00'/%3E%3C/linearGradient%3E%3ClinearGradient id='y' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23000'/%3E%3Cstop offset='1' stop-color='%2300f'/%3E%3C/linearGradient%3E%3Cfilter id='b' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='7'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23x)'/%3E%3Crect width='100' height='100' fill='url(%23y)' style='mix-blend-mode:screen'/%3E%3Crect x='10' y='10' width='80' height='80' rx='40' fill='%23808080' filter='url(%23b)'/%3E%3C/svg%3E" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="kaart"/>
+    <feDisplacementMap in="SourceGraphic" in2="kaart" scale="-22" xChannelSelector="R" yChannelSelector="B"/>
+  </filter>
+  <filter id="lg-s" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feImage href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='x'%3E%3Cstop offset='0' stop-color='%23000'/%3E%3Cstop offset='1' stop-color='%23f00'/%3E%3C/linearGradient%3E%3ClinearGradient id='y' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23000'/%3E%3Cstop offset='1' stop-color='%2300f'/%3E%3C/linearGradient%3E%3Cfilter id='b' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='7'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23x)'/%3E%3Crect width='100' height='100' fill='url(%23y)' style='mix-blend-mode:screen'/%3E%3Crect x='10' y='10' width='80' height='80' rx='40' fill='%23808080' filter='url(%23b)'/%3E%3C/svg%3E" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="kaart"/>
+    <feDisplacementMap in="SourceGraphic" in2="kaart" scale="-12" xChannelSelector="R" yChannelSelector="B"/>
+  </filter>
+</svg>
     <div class="lock" id="lock">
       <div class="lock-bg std" id="lock-bg"></div>
       <div class="lock-stand glass" id="lock-stand" role="button" tabindex="0" aria-label="Ondersteuningsstand">River</div>
