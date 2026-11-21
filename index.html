@@ -269,6 +269,13 @@
   .lock-speed span { background: linear-gradient(180deg, #4a63e0 0%, #8a55d6 35%, #e45aa8 62%, #f7a35c 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
     -webkit-text-stroke: 3px rgba(60, 10, 80, .55); filter: drop-shadow(0 6px 14px rgba(40, 0, 60, .35)); }
+  /* glow om de snelheid, pulseert langzaam in de kleur van de stand */
+  @keyframes lockGlow {
+    0%, 100% { filter: drop-shadow(0 6px 14px rgba(40, 0, 60, .35)) drop-shadow(0 0 4px var(--mode-c)); }
+    50% { filter: drop-shadow(0 6px 14px rgba(40, 0, 60, .35)) drop-shadow(0 0 18px var(--mode-c)) drop-shadow(0 0 36px var(--mode-c)); }
+  }
+  .lock-speed span { animation: lockGlow 4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .lock-speed span { animation: none; } }
   #lock-int { font-size: min(44vh, 82vw); letter-spacing: -6px; }
   #lock-dec { font-size: min(17vh, 32vw); letter-spacing: -2px; }
   .lock-unit { text-align: center; margin-top: 4px; font-size: 15px; font-weight: 600; letter-spacing: 3px; text-shadow: 0 1px 6px rgba(40, 0, 60, .5); }
@@ -305,6 +312,21 @@
     .lring b { font-size: 18px; }
     .lring small { font-size: 10px; }
   }
+  /* Skyline: zachte band op de hoogte van de skyline die langzaam oplicht in de kleur van de stand */
+  .lock-sky { position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+    top: calc(var(--sky-y, 40%) - 14%); height: 28%; background: var(--mode-c); mix-blend-mode: color; opacity: .12;
+    -webkit-mask: linear-gradient(transparent, #000 32%, #000 68%, transparent); mask: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+    animation: sky-pulse 5s ease-in-out infinite; transition: background-color 1s; }
+  @keyframes sky-pulse { 0%, 100% { opacity: .12; } 50% { opacity: .72; } }
+  @media (prefers-reduced-motion: reduce) { .lock-sky { animation: none; opacity: .4; } }
+  body.sky-off .lock-sky { display: none; }
+  .bg-thumb { position: relative; overflow: hidden; }
+  .bg-thumb::after { content: ""; position: absolute; left: 0; right: 0; top: calc(var(--sky-y, 40%) - 14%); height: 28%; background: var(--mode-c); opacity: .55;
+    mix-blend-mode: color; -webkit-mask: linear-gradient(transparent, #000 32%, #000 68%, transparent); mask: linear-gradient(transparent, #000 32%, #000 68%, transparent); }
+  body.sky-off .bg-thumb::after { display: none; }
+  .sky-check { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; color: var(--text); font-size: 15px; }
+  .sky-check input { width: 22px; height: 22px; min-height: 0; margin: 0; accent-color: var(--mode-c); }
+  #sky-y { accent-color: var(--mode-c); }
 </style>
 </head>
 <body class="rit">
@@ -330,6 +352,7 @@
 </svg>
     <div class="lock" id="lock">
       <div class="lock-bg std" id="lock-bg"></div>
+      <div class="lock-sky" id="lock-sky" aria-hidden="true"></div>
       <div class="lock-stand glass" id="lock-stand" role="button" tabindex="0" aria-label="Ondersteuningsstand">River</div>
       <div class="lock-speed" aria-label="Snelheid"><span id="lock-int">0</span><span id="lock-dec">,0</span></div>
       <div class="lock-unit">KM/U</div>
@@ -501,6 +524,9 @@
         </div>
       </div>
       <input type="file" id="bg-file" accept="image/*" hidden>
+      <label class="sky-check"><input type="checkbox" id="sky-on" checked> Skyline pulseert in de kleur van je stand</label>
+      <label for="sky-y">Hoogte skyline op je achtergrond</label>
+      <input type="range" id="sky-y" min="10" max="90" step="1" value="40">
     </div>
     <div class="card">
       <details>
@@ -1121,11 +1147,21 @@
     await applyLockBg(); toast('Standaardachtergrond');
   });
 
+  /* ---------- Skyline-gloed (Lockscreen) ---------- */
+  function applySky() {
+    const sky = Object.assign({ on: true, y: 40 }, state.sky);
+    document.body.classList.toggle('sky-off', !sky.on);
+    document.body.style.setProperty('--sky-y', sky.y + '%');
+    $('sky-on').checked = sky.on; $('sky-y').value = sky.y; $('sky-y').disabled = !sky.on;
+  }
+  $('sky-on').addEventListener('change', (e) => { state.sky = Object.assign({ on: true, y: 40 }, state.sky, { on: e.target.checked }); save(); applySky(); });
+  $('sky-y').addEventListener('input', (e) => { state.sky = Object.assign({ on: true, y: 40 }, state.sky, { y: Number(e.target.value) }); save(); applySky(); });
+
   /* ---------- Start ---------- */
   // hoogte van de menubalk meten, zodat het ritscherm er precies boven past
   const setNavH = () => document.documentElement.style.setProperty('--nav-h', document.querySelector('nav').offsetHeight + 'px');
   setNavH(); addEventListener('resize', setNavH);
-  renderOdo(); renderModes(); renderRide(); setButtons(); applySkin(); applyLockBg();
+  renderOdo(); renderModes(); renderRide(); setButtons(); applySkin(); applyLockBg(); applySky();
   $('r-date').value = new Date().toISOString().slice(0, 10);
   renderDisplayTop();
   try { history.scrollRestoration = 'manual'; } catch {}
