@@ -314,15 +314,15 @@
   }
   /* Skyline: zachte band op de hoogte van de skyline die langzaam oplicht in de kleur van de stand */
   .lock-sky { position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
-    top: calc(var(--sky-y, 40%) - 14%); height: 28%; background: var(--mode-c); mix-blend-mode: color; opacity: .12;
-    -webkit-mask: linear-gradient(transparent, #000 32%, #000 68%, transparent); mask: linear-gradient(transparent, #000 32%, #000 68%, transparent);
-    animation: sky-pulse 5s ease-in-out infinite; transition: background-color 1s; }
-  @keyframes sky-pulse { 0%, 100% { opacity: .12; } 50% { opacity: .72; } }
+    top: calc(var(--sky-y, 40%) - 16%); height: 26%; background: var(--mode-c); mix-blend-mode: color; opacity: .1;
+    -webkit-mask: linear-gradient(transparent, #000 50%, #000 82%, transparent); mask: linear-gradient(transparent, #000 50%, #000 82%, transparent);
+    animation: sky-pulse 6s ease-in-out infinite; transition: background-color 1s; }
+  @keyframes sky-pulse { 0%, 100% { opacity: .1; } 50% { opacity: .85; } }
   @media (prefers-reduced-motion: reduce) { .lock-sky { animation: none; opacity: .4; } }
   body.sky-off .lock-sky { display: none; }
   .bg-thumb { position: relative; overflow: hidden; }
-  .bg-thumb::after { content: ""; position: absolute; left: 0; right: 0; top: calc(var(--sky-y, 40%) - 14%); height: 28%; background: var(--mode-c); opacity: .55;
-    mix-blend-mode: color; -webkit-mask: linear-gradient(transparent, #000 32%, #000 68%, transparent); mask: linear-gradient(transparent, #000 32%, #000 68%, transparent); }
+  .bg-thumb::after { content: ""; position: absolute; left: 0; right: 0; top: calc(var(--sky-y, 40%) - 16%); height: 26%; background: var(--mode-c); opacity: .8;
+    mix-blend-mode: color; -webkit-mask: linear-gradient(transparent, #000 50%, #000 82%, transparent); mask: linear-gradient(transparent, #000 50%, #000 82%, transparent); }
   body.sky-off .bg-thumb::after { display: none; }
   .sky-check { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; color: var(--text); font-size: 15px; }
   .sky-check input { width: 22px; height: 22px; min-height: 0; margin: 0; accent-color: var(--mode-c); }
