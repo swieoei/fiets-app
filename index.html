@@ -846,22 +846,38 @@
     bike.device = dev;
     if (!dev._fietsListener) { dev.addEventListener('gattserverdisconnected', onBikeDisconnect); dev._fietsListener = true; }
     btUI(dev.name || 'Fiets', 'Verbinden…');
+    let switchTo = null;
     try {
       const server = await dev.gatt.connect();
       bike.connected = true; clearTimeout(bike.retry);
-      state.bike = { id: dev.id, name: dev.name || 'Fiets' }; save();
       const bat = await readBattery(server);
       const mode = await readMode(server);
-      btUI(dev.name || 'Fiets', 'Verbonden' + (bat ? ' · accu' : '') + (mode ? ' · stand' : ''));
-      startRide('bt');
+      if (!bat && !mode) {
+        // Geen accu en geen stand: dit is de Gazelle Connect-module, niet de Fazua-aandrijving.
+        // Beide heten hetzelfde (GZ…): stap over op de andere bekende met dezelfde naam en onthoud welke de module is.
+        state.bike = Object.assign({}, state.bike, { name: dev.name || 'Fiets', moduleId: dev.id }); save();
+        const devs = navigator.bluetooth.getDevices ? await navigator.bluetooth.getDevices() : [];
+        switchTo = devs.find((d) => d.name === dev.name && d.id !== dev.id) || null;
+        if (!switchTo) toast('Verbonden met de Gazelle Connect-module. Kies de andere GZ in de lijst voor accu en stand');
+      }
+      if (!switchTo) {
+        state.bike = Object.assign({}, state.bike, { id: dev.id, name: dev.name || 'Fiets' }); save();
+        btUI(dev.name || 'Fiets', 'Verbonden' + (bat ? ' · accu' : '') + (mode ? ' · stand' : ''));
+        startRide('bt');
+      }
     } catch {
       bike.connected = false;
       btUI(dev.name || 'Fiets', 'Zoeken…');
       scheduleReconnect();
     } finally { bike.connecting = false; }
+    if (switchTo) {
+      bike.device = switchTo; bike.connected = false; // eerst omzetten: de ontkoppeling van de module start dan geen herverbinding
+      try { dev.gatt.disconnect(); } catch {}
+      connectBike(switchTo);
+    }
   }
-  function onBikeDisconnect() {
-    if (!bike.device) return; // zelf losgekoppeld
+  function onBikeDisconnect(e) {
+    if (!bike.device || (e && e.target && e.target !== bike.device)) return; // zelf losgekoppeld, of een ander apparaat (module)
     bike.connected = false; bike.modeFromBike = false;
     btUI(bike.device.name || 'Fiets', 'Verbinding kwijt, zoeken…');
     scheduleReconnect();
@@ -898,8 +914,11 @@
     btUI(state.bike.name, 'Zoeken…');
     try {
       const devs = await navigator.bluetooth.getDevices();
-      const byName = devs.filter((d) => d.name === state.bike.name);
-      const dev = devs.find((d) => d.id === state.bike.id) || (byName.length === 1 ? byName[0] : null);
+      // voorkeur: de bekende aandrijving; de Gazelle Connect-module (zelfde naam) alleen als er niets anders is
+      const named = devs.filter((d) => d.name === state.bike.name);
+      const dev = devs.find((d) => d.id === state.bike.id && d.id !== state.bike.moduleId)
+        || named.find((d) => d.id !== state.bike.moduleId)
+        || devs.find((d) => d.id === state.bike.id) || null;
       if (!dev) { btUI(state.bike.name, 'Tik om te verbinden'); return; }
       // fiets nog uit of buiten bereik: luister naar zijn signaal en verbind zodra hij er is
       if (dev.watchAdvertisements && !dev._fietsWatch) {
