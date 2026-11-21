@@ -813,6 +813,8 @@
     } catch { return false; }
   }
   async function connectBike(dev) {
+    if (bike.connecting || (bike.connected && bike.device === dev)) return; // niet dubbel verbinden
+    bike.connecting = true;
     bike.device = dev;
     if (!dev._fietsListener) { dev.addEventListener('gattserverdisconnected', onBikeDisconnect); dev._fietsListener = true; }
     btUI(dev.name || 'Fiets', 'Verbinden…');
@@ -828,7 +830,7 @@
       bike.connected = false;
       btUI(dev.name || 'Fiets', 'Zoeken…');
       scheduleReconnect();
-    }
+    } finally { bike.connecting = false; }
   }
   function onBikeDisconnect() {
     if (!bike.device) return; // zelf losgekoppeld
@@ -859,17 +861,32 @@
     }
   });
   // bij openen van de app: eerder gekoppelde fiets automatisch opnieuw verbinden
+  // Bij het openen van de app: eerder gekozen fiets zelf terugvinden en verbinden.
+  // Kan alleen als Chrome getDevices() aanbiedt (chrome://flags: Web Bluetooth new permissions backend).
   async function autoReconnect() {
     if (!btSupported) { btUI('Bluetooth', 'Geen Bluetooth'); return; }
     if (!state.bike) return;
+    if (!navigator.bluetooth.getDevices) { btUI(state.bike.name, 'Tik om te verbinden'); return; }
     btUI(state.bike.name, 'Zoeken…');
     try {
-      const devs = navigator.bluetooth.getDevices ? await navigator.bluetooth.getDevices() : [];
-      const dev = devs.find((d) => d.id === state.bike.id);
-      if (dev) { connectBike(dev); return; }
-    } catch {}
-    btUI(state.bike.name, 'Tik om te verbinden');
+      const devs = await navigator.bluetooth.getDevices();
+      const byName = devs.filter((d) => d.name === state.bike.name);
+      const dev = devs.find((d) => d.id === state.bike.id) || (byName.length === 1 ? byName[0] : null);
+      if (!dev) { btUI(state.bike.name, 'Tik om te verbinden'); return; }
+      // fiets nog uit of buiten bereik: luister naar zijn signaal en verbind zodra hij er is
+      if (dev.watchAdvertisements && !dev._fietsWatch) {
+        dev._fietsWatch = true;
+        dev.addEventListener('advertisementreceived', () => { if (!bike.connected) connectBike(dev); });
+        dev.watchAdvertisements().catch(() => {});
+      }
+      connectBike(dev);
+    } catch { btUI(state.bike.name, 'Tik om te verbinden'); }
   }
+  // terug in de app en nog niet verbonden: meteen opnieuw proberen
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || bike.connected) return;
+    if (bike.device) connectBike(bike.device); else autoReconnect();
+  });
   function setButtons() {
     $('btn-start').textContent = ride.paused ? 'Verder' : 'Start';
     $('btn-start').disabled = ride.active && !ride.paused;
