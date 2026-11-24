@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- zelfde fiets als icons/icon.svg, gecentreerd in het veilige gebied van een adaptief icoon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="768"
+    android:viewportHeight="768">
+    <group android:translateX="128" android:translateY="128">
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#3B82F6"
+            android:strokeWidth="26"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M82,300a78,78 0,1 0,156 0a78,78 0,1 0,-156 0M274,300a78,78 0,1 0,156 0a78,78 0,1 0,-156 0M160,300l60,-120h96l36,120M220,180l50,120h82M300,140h40M200,150h40" />
+    </group>
+</vector>

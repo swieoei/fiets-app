@@ -643,6 +643,8 @@
   /* ---------- Fietscomputer ---------- */
   const IDLE_STOP = 5 * 60000; // na 5 min stilstand stopt de rit vanzelf
   const ride = { active: false, paused: false, watch: null, dist: 0, moving: 0, max: 0, last: null, started: 0, lastMove: 0, tick: null, lock: null, byMode: {} };
+  // In de Android-app (window.FietsNative) meet de app zelf, ook op de achtergrond; deze pagina toont dan wat hij meet
+  const NATIVE = window.FietsNative || null;
 
   function haversine(a, b) {
     const R = 6371000, r = Math.PI / 180;
@@ -710,6 +712,7 @@
   function nextMode() {
     if (bike.connected && bike.modeFromBike) { toast('De stand komt van je fiets: wissel met de knoppen op je stuur'); return; }
     state.mode = MODES[(MODES.indexOf(state.mode) + 1) % MODES.length]; save(); renderModes();
+    if (NATIVE) NATIVE.setMode(state.mode);
   }
   $('pas').addEventListener('click', nextMode);
   $('gauge-mode').addEventListener('click', nextMode);
@@ -752,6 +755,11 @@
   const wantAwake = () => ride.active || (power.charging && bike.connected);
   let wakeQueue = Promise.resolve();
   function updateWakeLock() {
+    if (NATIVE) {
+      const on = wantAwake();
+      if (on !== updateWakeLock.on) { updateWakeLock.on = on; NATIVE.keepScreenOn(on); }
+      return Promise.resolve();
+    }
     wakeQueue = wakeQueue.then(async () => {
       if (!('wakeLock' in navigator)) return;
       const held = ride.lock && !ride.lock.released;
@@ -768,6 +776,7 @@
   }).catch(() => {});
 
   function startRide(reason) {
+    if (NATIVE) { NATIVE.start(); showTab('rit'); setTimeout(nativeSync, 300); return; }
     if (!('geolocation' in navigator)) { toast('Deze browser ondersteunt geen GPS'); return; }
     if (ride.active) return;
     showTab('rit');
@@ -783,6 +792,7 @@
   }
   function stopRide(reason) {
     if (!ride.active) return;
+    if (NATIVE) { NATIVE.stop(); setTimeout(nativeSync, 300); return; }
     if (ride.watch != null) navigator.geolocation.clearWatch(ride.watch);
     clearInterval(ride.tick);
     const km = ride.dist / 1000;
@@ -798,10 +808,13 @@
     $('gps-status').textContent = bike.connected ? 'Fiets verbonden. Rit start opnieuw na het opnieuw verbinden of met Start.' : 'Rit start vanzelf zodra je fiets verbonden is';
   }
   $('btn-start').addEventListener('click', () => {
+    if (ride.paused && NATIVE) { NATIVE.resume(); setTimeout(nativeSync, 300); return; }
     if (ride.paused) { ride.paused = false; ride.last = null; ride.lastMove = Date.now(); setButtons(); $('gps-status').textContent = 'Rit hervat'; return; }
     startRide('manual');
   });
-  $('btn-pause').addEventListener('click', () => { ride.paused = true; setButtons(); $('gps-status').textContent = 'Gepauzeerd'; renderRide(0); });
+  $('btn-pause').addEventListener('click', () => {
+    if (NATIVE) { NATIVE.pause(); setTimeout(nativeSync, 300); return; }
+    ride.paused = true; setButtons(); $('gps-status').textContent = 'Gepauzeerd'; renderRide(0); });
   $('btn-stop').addEventListener('click', () => stopRide('manual'));
 
   /* ---------- Bluetooth: verbinden = rit starten ---------- */
@@ -885,9 +898,10 @@
   function scheduleReconnect() {
     clearTimeout(bike.retry);
     if (!bike.device) return;
-    bike.retry = setTimeout(() => { if (!bike.connected && document.visibilityState === 'visible') connectBike(bike.device); else scheduleReconnect(); }, 5000); // snel opnieuw proberen: zodra de fiets vrijkomt, pakt deze app hem
+    bike.retry = setTimeout(() => { if (!bike.connected && document.visibilityState === 'visible') { watchBike(bike.device); connectBike(bike.device); } else scheduleReconnect(); }, 5000); // snel opnieuw proberen: zodra de fiets vrijkomt, pakt deze app hem
   }
   $('btn-bt').addEventListener('click', async () => {
+    if (NATIVE) { NATIVE.btTap(); return; }
     if (!btSupported) { toast('Bluetooth werkt alleen in Chrome op Android; starten kan met Start'); return; }
     if (bike.connected) { clearTimeout(bike.retry); const d = bike.device; bike.device = null; bike.connected = false; bike.modeFromBike = false; d.gatt.disconnect(); btUI(state.bike?.name || 'Fiets', 'Koppel fiets'); return; }
     if (bike.device) { connectBike(bike.device); return; }
@@ -908,6 +922,7 @@
   // Bij het openen van de app: eerder gekozen fiets zelf terugvinden en verbinden.
   // Kan alleen als Chrome getDevices() aanbiedt (chrome://flags: Web Bluetooth new permissions backend).
   async function autoReconnect() {
+    if (NATIVE) { nativeSync(); return; }
     if (!btSupported) { btUI('Bluetooth', 'Geen Bluetooth'); return; }
     if (!state.bike) return;
     if (!navigator.bluetooth.getDevices) { btUI(state.bike.name, 'Tik om te verbinden'); return; }
@@ -921,19 +936,28 @@
         || devs.find((d) => d.id === state.bike.id) || null;
       if (!dev) { btUI(state.bike.name, 'Tik om te verbinden'); return; }
       // fiets nog uit of buiten bereik: luister naar zijn signaal en verbind zodra hij er is
-      if (dev.watchAdvertisements && !dev._fietsWatch) {
-        dev._fietsWatch = true;
-        dev.addEventListener('advertisementreceived', () => { if (!bike.connected) connectBike(dev); });
-        dev.watchAdvertisements().catch(() => {});
-      }
+      watchBike(dev);
       connectBike(dev);
     } catch { btUI(state.bike.name, 'Tik om te verbinden'); }
   }
-  // terug in de app en nog niet verbonden: meteen opnieuw proberen
-  document.addEventListener('visibilitychange', () => {
+  // Chrome stopt met luisteren naar de fiets zodra de app uit beeld gaat of de focus kwijtraakt
+  // (Maps ernaast, meldingen omlaag getrokken, scherm uit). Daarom bij elke terugkeer opnieuw aanzetten.
+  function watchBike(dev) {
+    if (!dev || !dev.watchAdvertisements) return;
+    if (!dev._fietsWatch) {
+      dev._fietsWatch = true;
+      dev.addEventListener('advertisementreceived', () => { if (!bike.connected && !bike.connecting) connectBike(dev); });
+    }
+    if (!dev.watchingAdvertisements) dev.watchAdvertisements().catch(() => {});
+  }
+  // terug in de app (of focus terug) en nog niet verbonden: meteen opnieuw proberen
+  function resumeBike() {
+    if (NATIVE) { if (document.visibilityState === 'visible') nativeSync(); return; }
     if (document.visibilityState !== 'visible' || bike.connected) return;
-    if (bike.device) connectBike(bike.device); else autoReconnect();
-  });
+    if (bike.device) { watchBike(bike.device); connectBike(bike.device); } else autoReconnect();
+  }
+  document.addEventListener('visibilitychange', resumeBike);
+  addEventListener('focus', resumeBike);
   function setButtons() {
     $('btn-start').textContent = ride.paused ? 'Verder' : 'Start';
     $('btn-start').disabled = ride.active && !ride.paused;
@@ -945,6 +969,46 @@
     state.rides.unshift(r);
     state.odo += r.km;
     save(); renderOdo();
+  }
+
+  /* ---------- Android-app ----------
+     De app doet Bluetooth en GPS zelf, ook met het scherm uit of de app dicht.
+     Deze pagina toont elke seconde wat hij meet en neemt afgeronde ritten over in het logboek. */
+  function nativeSync() {
+    let s;
+    try { s = JSON.parse(NATIVE.live()); } catch { return; }
+    if (s.pending) importNativeRides();
+    if (s.connected && MODES.includes(s.mode)) {
+      if (s.mode !== state.mode) { state.mode = s.mode; save(); renderModes(); }
+    } else if (s.mode !== state.mode) NATIVE.setMode(state.mode); // zonder fiets kies je de stand zelf
+    if (s.bat >= 0 && s.batAt > (state.battery.setAt || 0)) { Object.assign(state.battery, { pct: s.bat, setAt: s.batAt, setOdo: state.odo }); save(); }
+    if (s.name && state.bike?.name !== s.name) { state.bike = Object.assign({}, state.bike, { name: s.name }); save(); }
+    bike.connected = !!s.connected;
+    bike.modeFromBike = !!(s.connected && s.mode);
+    power.charging = !!s.charging;
+    const r = s.ride || {};
+    Object.assign(ride, { active: !!r.active, paused: !!r.paused, dist: r.dist || 0, moving: r.moving || 0, max: r.max || 0, started: r.started || 0, lastMove: r.lastMove || 0 });
+    btUI(s.name || state.bike?.name || 'Fiets', s.status || '');
+    setButtons();
+    renderRide(r.active && !r.paused ? r.speed || 0 : 0);
+    const gps = s.gps || '';
+    if ($('gps-status').textContent !== gps) $('gps-status').textContent = gps;
+  }
+  function importNativeRides() {
+    let list;
+    try { list = JSON.parse(NATIVE.takeRides()); } catch { return; }
+    if (!list.length) return;
+    const added = [];
+    for (const r of list) {
+      if (state.rides.some((x) => x.at === r.at)) continue; // al eerder overgenomen
+      const rit = { id: r.id, at: r.at, end: r.end, km: r.km, mins: r.mins, max: r.max, mode: r.mode, modes: r.modes };
+      state.rides.push(rit); state.odo += r.km; added.push(rit);
+    }
+    state.rides.sort((a, b) => b.at - a.at);
+    save(); renderOdo();
+    NATIVE.ackRides(JSON.stringify(list.map((r) => r.id)));
+    if (added.length === 1) toast(`Rit opgeslagen: ${nf(added[0].km, 2)} km`);
+    else if (added.length > 1) toast(`${added.length} ritten opgeslagen`);
   }
 
   /* ---------- Logboek ---------- */
@@ -1061,10 +1125,12 @@
 
   /* ---------- Back-up ---------- */
   $('btn-export').addEventListener('click', () => {
+    const name = `fiets-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    if (NATIVE) { toast(NATIVE.saveFile(name, JSON.stringify(state, null, 2)) ? 'Back-up opgeslagen in Downloads' : 'Opslaan lukte niet'); return; }
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `fiets-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = name;
     a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
   $('btn-import').addEventListener('click', () => $('import-file').click());
@@ -1086,7 +1152,8 @@
   $('btn-nav').addEventListener('click', () => {
     const web = 'https://www.google.com/maps/dir/?api=1&travelmode=bicycling';
     if (!/Android/i.test(navigator.userAgent)) { window.open(web, '_blank', 'noopener'); return; }
-    location.href = 'intent://www.google.com/maps/dir/?api=1&travelmode=bicycling#Intent;scheme=https;package=com.google.android.apps.maps;launchFlags=0x10001000;S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+    const url = 'intent://www.google.com/maps/dir/?api=1&travelmode=bicycling#Intent;scheme=https;package=com.google.android.apps.maps;launchFlags=0x10001000;S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+    if (NATIVE) NATIVE.openNav(url); else location.href = url;
   });
 
   /* ---------- Weergave ---------- */
@@ -1184,6 +1251,10 @@
   window.scrollTo(0, 0);
   showTab('rit'); // standaard altijd de stats in beeld
   autoReconnect();
+  if (NATIVE) {
+    window.fietsToast = toast; // meldingen van de app (koppelen, toestemming) op het scherm
+    setInterval(() => { if (document.visibilityState === 'visible') nativeSync(); }, 1000);
+  }
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
