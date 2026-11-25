@@ -222,25 +222,37 @@ class MainActivity : Activity() {
         }
     }
 
+    /**
+     * Zoekt de Fazua-aandrijving. Zonder scanfilter: sommige telefoons filteren in de Bluetooth-chip alleen
+     * op het eerste advertentiepakket en missen dan de diensten uit het scan-antwoord.
+     * Herkenning: dienst 0xFD6D of 0x1818 (Cycling Power). De Gazelle Connect-module heeft dezelfde naam,
+     * maar adverteert alleen 0x1580. Lukt herkennen niet, dan het sterkste GZ-apparaat zonder 0x1580.
+     */
     private fun scanForFazua(adapter: BluetoothAdapter, done: (ScanResult?) -> Unit) {
         val scanner = adapter.bluetoothLeScanner ?: return done(null)
-        val filters = listOf(
-            ScanFilter.Builder().setServiceUuid(ParcelUuid(BikeGatt.FAZUA_SVC)).build(),
-            ScanFilter.Builder().setServiceUuid(ParcelUuid(BikeGatt.CYCLING_POWER)).build(),
-        )
+        val module = ParcelUuid.fromString("00001580-0000-1000-8000-00805f9b34fb")
+        val fazua = setOf(ParcelUuid(BikeGatt.FAZUA_SVC), ParcelUuid(BikeGatt.CYCLING_POWER))
+        val candidates = HashMap<String, ScanResult>()
         var finished = false
-        val cb = object : ScanCallback() {
-            override fun onScanResult(type: Int, r: ScanResult) {
-                if (finished) return
-                finished = true; scanner.stopScan(this); done(r)
-            }
-            override fun onScanFailed(code: Int) {
-                if (finished) return
-                finished = true; done(null)
-            }
+        lateinit var cb: ScanCallback
+        fun finish(r: ScanResult?) {
+            if (finished) return
+            finished = true
+            try { scanner.stopScan(cb) } catch (_: Exception) {}
+            done(r)
         }
-        scanner.startScan(filters, ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), cb)
-        main.postDelayed({ if (!finished) { finished = true; scanner.stopScan(cb); done(null) } }, 15_000)
+        cb = object : ScanCallback() {
+            override fun onScanResult(type: Int, r: ScanResult) {
+                val rec = r.scanRecord
+                val uuids = rec?.serviceUuids.orEmpty().toSet() + rec?.serviceData?.keys.orEmpty()
+                val name = rec?.deviceName ?: r.device.name ?: ""
+                if (uuids.any { it in fazua }) { Log.d(TAG, "Fazua gevonden: ${r.device.address} $name"); finish(r); return }
+                if (name.startsWith("GZ") && module !in uuids) candidates[r.device.address] = r
+            }
+            override fun onScanFailed(code: Int) { Log.w(TAG, "scan mislukt: $code"); finish(null) }
+        }
+        scanner.startScan(null, ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), cb)
+        main.postDelayed({ finish(candidates.values.maxByOrNull { it.rssi }) }, 15_000)
     }
 
     private fun associate(dev: BluetoothDevice) {
