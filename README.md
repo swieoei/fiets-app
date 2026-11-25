@@ -13,9 +13,9 @@ Bij een update: verhoog de cachenaam in `sw.js` (`fiets-app-v1` → `v2`).
 - Weergave kiezen in het tabblad Accu: Display (zwart kleurendisplay) of Neon (neonkleuren, lichtgevende meter). Lettertype Kanit, SIL Open Font License 1.1 (zie `fonts/OFL.txt`).
 - Weergave Lockscreen: grote cijfers en glazen ringen; achtergrond naar keuze (eigen foto blijft alleen op het toestel, in IndexedDB) of de standaard roze palmen. Lettertype Antonio, SIL Open Font License 1.1 (zie `fonts/OFL-Antonio.txt`).
 
-## Android-app (meten op de achtergrond)
+## Android-app Scayo (meten op de achtergrond)
 
-In `android/` staat een kleine Android-app (Kotlin, geen extra bibliotheken) die dezelfde pagina toont in een WebView en zelf meet, ook met het scherm uit of de app dicht:
+In `android/` staat de Android-app Scayo (Kotlin, geen extra bibliotheken) die dezelfde pagina toont in een WebView en zelf meet, ook met het scherm uit of de app dicht:
 
 - Android meldt wanneer de gekoppelde fiets in de buurt komt (Companion Device Manager, `BikePresenceService`). De app start dan `RideService`, verbindt via Bluetooth met de Fazua-aandrijving (stand via dienst 0xFD6D, accu via 0x180F) en start de rit.
 - GPS-afstand, rijtijd en de stop na 5 minuten stilstand werken zoals in de web-app (`RideEngine`, met tests in `app/src/test`). Blijft de fiets aan na zo'n stop, dan start een nieuwe rit zodra je weer rijdt.
